@@ -18,6 +18,6 @@ for module in [os.path.splitext(f)[0] for f in os.listdir(module_root_directory)
 
 __all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']
 
-#import shutil
-#from .common import module_src_directory, module_js_directory, application_root_directory, application_web_extensions_directory
-#shutil.copytree(module_js_directory, application_web_extensions_directory, dirs_exist_ok=True)
+import shutil
+from .common import module_js_directory, application_web_extensions_directory
+shutil.copytree(module_js_directory, application_web_extensions_directory, dirs_exist_ok=True)
