@@ -19,3 +19,9 @@ Load an image by its full filename
 ## Common Sizes
 
 A (configurable) dropdown to pick commonly used sizes. Edit `config.yaml` to change the list.
+
+## Timer
+
+How long does the workflow spend in each node?
+
+![image](docs/timer.png)
