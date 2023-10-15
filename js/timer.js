@@ -3,49 +3,35 @@ import { api } from "../../../scripts/api.js";
 import { ComfyWidgets } from "../../../scripts/widgets.js";
 
 class Timer {
-    static currentNodeId = null;
-    static lastChangeTime = null;
-
     static start() {
         Timer.display("\n--- Run Started ---\n");
         const t = LiteGraph.getTime();;
         Timer.startTime = t;
         Timer.lastChangeTime = t;
-        //Timer.currentNodeId = app.runningNodeId;
     }
 
     static end() {
-        const totaltime = (Timer.lastChangeTime - Timer.startTime).toString().padStart(7);
+        const time_string = Timer._format((Timer.lastChangeTime - Timer.startTime));
         Timer.display("---  Run Ended  ---\n");
-        Timer.display(`${totaltime} ms total\n\n`);
-        Timer.lastChangeTime = null;
+        Timer.display(`${time_string} total\n\n`);
     }
 
     static display(string) {
-        if (Timer.displayNode) {
-            Timer.displayNode.widgets[1].value += string;
-            Timer.displayNode.onResize?.(Timer.displayNode.size);
-        }
+        Timer?.onInfoAdded(string);
         console.log(string);
     }
 
-    static clear() {
-        if (Timer.displayNode) {
-            Timer.displayNode.widgets[1].value = "";
-            Timer.displayNode.onResize?.(Timer.displayNode.size);
-        }
-    }
+    static _format(number, dp=2, pad=8) { return `${(number/1000).toFixed(dp).padStart(pad)} s` }
 
     static tick( {detail} ) {
         if (detail==Timer?.currentNodeId) return;
         console.log(`Entering ${detail}`);
 
         const t = LiteGraph.getTime();
-        const dt = t - Timer.lastChangeTime;
-        const time_ms_string = dt.toString().padStart(7);
+        const time_string = Timer._format(t - Timer.lastChangeTime);
         const node_string = (Timer.currentNodeId) ? `node #${Timer.currentNodeId}` : "startup";
 
-        Timer.display(`${time_ms_string} ms in ${node_string}\n`);
+        Timer.display(`${time_string} in ${node_string}\n`);
 
         Timer.lastChangeTime = t;
         Timer.currentNodeId = detail;
@@ -70,13 +56,20 @@ app.registerExtension({
             const orig_nodeCreated = nodeType.prototype.onNodeCreated;
             nodeType.prototype.onNodeCreated = function () {
                 orig_nodeCreated?.apply(this, arguments);
-                this.addWidget("button", "Clear", "", Timer.clear);
+                this.addWidget("button", "Clear", "", function() {
+                    w.value = "";
+                    this.onResize?.(this.size);
+                }, { serialize: false },);
                 const w = ComfyWidgets["STRING"](this, "display_text_widget", ["STRING", { multiline: true }], app).widget;
                 w.inputEl.readOnly = true;
                 w.inputEl.style.opacity = 0.6;
                 w.inputEl.style.fontSize = "9pt";
                 w.value = "";
-                Timer.displayNode = this;
+
+                Timer.onInfoAdded = function(string) {
+                    w.value += string;
+                    this.onResize?.(this.size);
+                }
             }
         }
     },
