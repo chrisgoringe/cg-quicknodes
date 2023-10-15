@@ -1,16 +1,24 @@
 import { app } from "../../../scripts/app.js";
+import { api } from "../../../scripts/api.js";
 import { ComfyWidgets } from "../../../scripts/widgets.js";
 
 class Timer {
     static currentNodeId = null;
     static lastChangeTime = null;
+
     static start() {
         Timer.display("\n--- Run Started ---\n");
-        const d = new Date();
-        const t = d.getTime();
+        const t = LiteGraph.getTime();;
         Timer.startTime = t;
         Timer.lastChangeTime = t;
-        Timer.currentNodeId = app.runningNodeId;
+        //Timer.currentNodeId = app.runningNodeId;
+    }
+
+    static end() {
+        const totaltime = (Timer.lastChangeTime - Timer.startTime).toString().padStart(7);
+        Timer.display("---  Run Ended  ---\n");
+        Timer.display(`${totaltime} ms total\n\n`);
+        Timer.lastChangeTime = null;
     }
 
     static display(string) {
@@ -18,6 +26,7 @@ class Timer {
             Timer.displayNode.widgets[1].value += string;
             Timer.displayNode.onResize?.(Timer.displayNode.size);
         }
+        console.log(string);
     }
 
     static clear() {
@@ -27,46 +36,28 @@ class Timer {
         }
     }
 
-    static tick() {
-        if (app.runningNodeId==Timer?.currentNodeId) return;
+    static tick( {detail} ) {
+        if (detail==Timer?.currentNodeId) return;
+        console.log(`Entering ${detail}`);
 
-        const d = new Date();
-        const t = d.getTime();
-        const nd = Timer.currentNodeId ? Timer.currentNodeId : 0;
-
-        if (!Timer.lastChangeTime) {
-            Timer.display("X")
-            Timer.lastChangeTime = t;
-            Timer.currentNodeId = app.runningNodeId;
-            return;
-        }
-
+        const t = LiteGraph.getTime();
         const dt = t - Timer.lastChangeTime;
-        const time = dt.toString().padStart(6);
-        const node = (nd>0) ? `node #${nd}` : "startup" ;
-        Timer.display(`${time} ms in ${node}\n`);
+        const time_ms_string = dt.toString().padStart(7);
+        const node_string = (Timer.currentNodeId) ? `node #${Timer.currentNodeId}` : "startup";
+
+        Timer.display(`${time_ms_string} ms in ${node_string}\n`);
 
         Timer.lastChangeTime = t;
-        Timer.currentNodeId = app.runningNodeId;
+        Timer.currentNodeId = detail;
 
-        if (!Timer.currentNodeId) {
-            Timer.lastChangeTime = null;
-            const total = t - Timer.startTime;
-            const totaltime = total.toString().padStart(6);
-            Timer.display("---  Run Ended  ---\n");
-            Timer.display(`${totaltime} ms total\n\n`);
-        }
+        if (!Timer.currentNodeId) Timer.end();
     }
 }
 
 app.registerExtension({
 	name: "cg.quicknodes.timer",
     setup() {
-        const draw = LGraphCanvas.prototype.draw;
-        LGraphCanvas.prototype.draw = function() {
-            Timer.tick();
-            draw.apply(this,arguments);
-        }
+        api.addEventListener("executing", Timer.tick);
     },
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
         if (nodeType.comfyClass=="Timer") {
