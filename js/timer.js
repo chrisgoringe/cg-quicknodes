@@ -8,6 +8,7 @@ class Timer {
         Timer.display("\n--- Run Started ---\n");
         const d = new Date();
         const t = d.getTime();
+        Timer.startTime = t;
         Timer.lastChangeTime = t;
         Timer.currentNodeId = app.runningNodeId;
     }
@@ -50,7 +51,10 @@ class Timer {
 
         if (!Timer.currentNodeId) {
             Timer.lastChangeTime = null;
+            const total = t - Timer.startTime;
+            const totaltime = dt.toString().padStart(6);
             Timer.display("---  Run Ended  ---\n");
+            Timer.display(`${totaltime} ms total\n\n`);
         }
     }
 }
