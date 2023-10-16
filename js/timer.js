@@ -17,7 +17,7 @@ class Timer {
     }
 
     static display(string) {
-        Timer?.onInfoAdded(string);
+        if (Timer.onInfoAdded) Timer.onInfoAdded(string);
         console.log(string);
     }
 
@@ -29,7 +29,7 @@ class Timer {
 
         const t = LiteGraph.getTime();
         const time_string = Timer._format(t - Timer.lastChangeTime);
-        const node_string = (Timer.currentNodeId) ? `node #${Timer.currentNodeId}` : "startup";
+        const node_string = (Timer.currentNodeId) ? `node #${Timer.currentNodeId.toString().padStart(4)}` : "   startup";
 
         Timer.display(`${time_string} in ${node_string}\n`);
 
