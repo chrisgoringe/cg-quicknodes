@@ -70,7 +70,6 @@ class Timer {
         if (!Timer.runs_since_clear || this_node_data[1] > Timer.runs_since_clear) Timer.runs_since_clear = this_node_data[1]
         this_node_data[2] += dt;
         this_node_data[3] = this_node_data[2] / this_node_data[1];
-        this_node_data[4] = this_node_data[2] / Timer.runs_since_clear;
 
         Timer.lastChangeTime = t;
         Timer.currentNodeId = detail;
@@ -90,6 +89,7 @@ class Timer {
                 $el("th", {"textContent":"Per flow"}),
             ])
         ]);
+        Timer.all_times.forEach((node_data) => {node_data[4] = node_data[2] / Timer.runs_since_clear})
         Timer.all_times.sort((a,b)=>{ return b[4]-a[4]; })
         Timer.all_times.forEach((node_data) => {
             table.append($el("tr",[
