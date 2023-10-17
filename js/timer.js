@@ -3,25 +3,27 @@ import { api } from "../../../scripts/api.js";
 //import { ComfyWidgets } from "../../../scripts/widgets.js";
 import { $el } from "../../../scripts/ui.js";
 
-const MARGIN = 2;
+const MARGIN = 8;
 
-function get_position_style(ctx, widget_width, y, node_height) {
+function get_position_style(ctx, scroll_width, widget_width, y, node_width, node_height) {
     const elRect = ctx.canvas.getBoundingClientRect();
     const transform = new DOMMatrix()
         .scaleSelf(elRect.width / ctx.canvas.width, elRect.height / ctx.canvas.height)
         .multiplySelf(ctx.getTransform())
         .translateSelf(MARGIN, MARGIN + y);
 
+    const x = Math.max(0, Math.round((node_width - scroll_width - 2*MARGIN)/2));
     return {
         transformOrigin: '0 0',
         transform: transform,
-        left: `0px`, 
+        left: `${x}px`, 
         top: `0px`,
         position: "absolute",
         maxWidth: `${widget_width - MARGIN*2}px`,
-        maxHeight: `${node_height - MARGIN*2}px`,
+        maxHeight: `${node_height - MARGIN*2 - y}px`,
         width: `auto`,
         height: `auto`,
+        overflow: `auto`,
     }
 }
 
@@ -32,7 +34,7 @@ class Timer {
         Timer.runs_since_clear = 0; 
         if (Timer.onInfoAdded) Timer.onInfoAdded("");
     }
-    
+
     static start() {
         Timer.display("\n--- Run Started ---\n");
         const t = LiteGraph.getTime();;
@@ -86,12 +88,13 @@ class Timer {
         const table = $el("table",{
                 "textAlign":"right",
                 "border":"1px solid",
+                //"overflow": "auto",
             },[
             $el("tr",[
                 $el("th", {"textContent":"Node"}),
                 $el("th", {"textContent":"Runs"}),
-                $el("th", {"textContent":"Per run"}),
-                $el("th", {"textContent":"Per flow"}),
+                $el("th", {"textContent":"Per\u00A0run"}),
+                $el("th", {"textContent":"Per\u00A0flow"}),
             ])
         ]);
         Timer.all_times.forEach((node_data) => {node_data[4] = node_data[2] / Timer.runs_since_clear})
@@ -131,13 +134,11 @@ app.registerExtension({
                     type: "HTML",
                     name: "flying",
                     draw(ctx, node, widget_width, y, widget_height) { 
-                        Object.assign(this.inputEl.style, get_position_style(ctx, widget_width, y, node.size[1]));
+                        Object.assign(this.inputEl.style, get_position_style(ctx, this.inputEl.scrollWidth, widget_width, y, node.size[0], node.size[1]));
                     },
-                    computeSize() {
-                        return [this.inputEl.scrollWidth, this.inputEl.scrollHeight];
-                    }
                 };
-                widget.inputEl = $el("span",[$el("span"),]);
+                widget.inputEl = $el("div",[$el("span"),]);
+
                 document.body.appendChild(widget.inputEl);
 
                 this.addCustomWidget(widget);
