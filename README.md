@@ -1,8 +1,10 @@
 # cg-quicknodes
 
-Quick nodes written to do one thing
+Quick nodes written to do one thing. Got an idea? Post it as an issue and I'll have a think.
 
-![image](docs/image.png)
+To install, navigate to your custom_nodes directory and `git clone https://github.com/chrisgoringe/cg-quicknodes`.
+
+To update, navigate to the cg-quicknodes subdirectory and `git pull`.
 
 ## Read Widget
 
