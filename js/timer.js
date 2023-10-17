@@ -27,7 +27,12 @@ function get_position_style(ctx, widget_width, y, node_height) {
 
 class Timer {
     static all_times = []
-    static clear() { Timer.all_times = []; Timer.runs_since_clear = 0}
+    static clear() { 
+        Timer.all_times = []; 
+        Timer.runs_since_clear = 0; 
+        if (Timer.onInfoAdded) Timer.onInfoAdded("");
+    }
+    
     static start() {
         Timer.display("\n--- Run Started ---\n");
         const t = LiteGraph.getTime();;
@@ -119,6 +124,8 @@ app.registerExtension({
             const orig_nodeCreated = nodeType.prototype.onNodeCreated;
             nodeType.prototype.onNodeCreated = function () {
                 orig_nodeCreated?.apply(this, arguments);
+
+                this.addWidget("button", "clear", "", Timer.clear);
 
                 const widget = {
                     type: "HTML",
