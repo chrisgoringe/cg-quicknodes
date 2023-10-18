@@ -12,7 +12,7 @@ function get_position_style(ctx, scroll_width, widget_width, y, node_width, node
         .multiplySelf(ctx.getTransform())
         .translateSelf(MARGIN, MARGIN + y);
 
-    const x = Math.max(0, Math.round((node_width - scroll_width - 2*MARGIN)/2));
+    const x = Math.max(0, Math.round(ctx.getTransform().a*(node_width - scroll_width - 2*MARGIN)/2));
     return {
         transformOrigin: '0 0',
         transform: transform,
