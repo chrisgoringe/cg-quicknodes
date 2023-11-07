@@ -32,56 +32,43 @@ class Timer {
     static clear() { 
         Timer.all_times = []; 
         Timer.runs_since_clear = 0; 
-        if (Timer.onInfoAdded) Timer.onInfoAdded("");
+        if (Timer.onChange) Timer.onChange();
     }
 
     static start() {
-        Timer.display("\n--- Run Started ---\n");
         const t = LiteGraph.getTime();;
         Timer.startTime = t;
         Timer.lastChangeTime = t;
     }
 
-    static end() {
-        const time_string = Timer._format((Timer.lastChangeTime - Timer.startTime));
-        Timer.display("---  Run Ended  ---\n");
-        Timer.display(`${time_string} total\n\n`);
-        console.log(Timer.html());
-    }
+    static _format(number, dp=2) { return `${(number/1000).toFixed(dp)} s` }
 
-    static display(string) {
-        if (Timer.onInfoAdded) Timer.onInfoAdded(string);
-        console.log(string);
-    }
-
-    static _name(node_id) { return (node_id) ? `${node_id.toString().padStart(4)}` : "startup"; }
-    static _format(number, dp=2, pad=8) { return `${(number/1000).toFixed(dp).padStart(pad)} s` }
-
-    static tick( {detail} ) {
-        if (detail==Timer?.currentNodeId) return;
-        console.log(`Entering ${detail}`);
-
-        const t = LiteGraph.getTime();
-        const dt = t - Timer.lastChangeTime;
-        const time_string = Timer._format(dt);
-        const node_string = Timer._name(Timer.currentNodeId);
-
-        Timer.display(`${time_string} in ${node_string}\n`);
-
-        var this_node_data = Timer.all_times.find((node_data)=>node_data[0]==Timer.currentNodeId);
+    static add_timing(id, dt) {
+        var this_node_data = Timer.all_times.find((node_data)=>node_data[0]==id);
         if (!this_node_data) {
-            this_node_data = [Timer.currentNodeId,0,0,0,0];
+            this_node_data = [id,0,0,0,0];
             Timer.all_times.push(this_node_data);
         }
         this_node_data[1] += 1;
         if (!Timer.runs_since_clear || this_node_data[1] > Timer.runs_since_clear) Timer.runs_since_clear = this_node_data[1]
         this_node_data[2] += dt;
         this_node_data[3] = this_node_data[2] / this_node_data[1];
+    }
+
+    static tick( {detail} ) {
+        if (detail==Timer?.currentNodeId) return;
+        //console.log(`Entering ${detail}`);
+
+        const t = LiteGraph.getTime();
+
+        Timer.add_timing(Timer.currentNodeId ? Timer.currentNodeId : "startup", t - Timer.lastChangeTime)
 
         Timer.lastChangeTime = t;
         Timer.currentNodeId = detail;
 
-        if (!Timer.currentNodeId) Timer.end();
+        if (!Timer.currentNodeId) Timer.add_timing("total", t - Timer.startTime)
+
+        if (Timer.onChange) Timer.onChange();
     }
 
     static html() {
@@ -101,8 +88,8 @@ class Timer {
         Timer.all_times.sort((a,b)=>{ return b[4]-a[4]; })
         Timer.all_times.forEach((node_data) => {
             table.append($el("tr",[
-                $el("td", {style:{"textAlign":"right"},"textContent":Timer._name(node_data[0])}),
-                $el("td", {style:{"textAlign":"right"},"textContent":node_data[1].toString().padStart(4)}),
+                $el("td", {style:{"textAlign":"right"},"textContent":node_data[0]}),
+                $el("td", {style:{"textAlign":"right"},"textContent":node_data[1].toString()}),
                 $el("td", {style:{"textAlign":"right"},"textContent":Timer._format(node_data[3])}),
                 $el("td", {style:{"textAlign":"right"},"textContent":Timer._format(node_data[4])}),
             ]))
@@ -145,9 +132,9 @@ app.registerExtension({
                 this.onRemoved = function () { widget.inputEl.remove(); };
                 this.serialize_widgets = false;
 
-                Timer.onInfoAdded = function(string) {
+                Timer.onChange = function() {
                     widget.inputEl.replaceChild(Timer.html(), widget.inputEl.firstChild);
-                    this.onResize?.(this.size);
+                    //this.onResize?.(this.size);
                 }
             }
         }
