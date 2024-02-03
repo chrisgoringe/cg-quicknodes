@@ -16,8 +16,7 @@ for module in [os.path.splitext(f)[0] for f in os.listdir(module_root_directory)
             NODE_CLASS_MAPPINGS[name] = clazz
             NODE_DISPLAY_NAME_MAPPINGS[name] = pretty(name)
 
-__all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']
+WEB_DIRECTORY = "./js"
+__all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS', 'WEB_DIRECTORY']
 
-import shutil
-from .common import module_js_directory, application_web_extensions_directory
-shutil.copytree(module_js_directory, application_web_extensions_directory, dirs_exist_ok=True)
+

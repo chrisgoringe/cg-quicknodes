@@ -1,0 +1,77 @@
+[
+    {
+        "name": "sai-3d-model",
+        "prompt": "professional 3d model {prompt} . octane render, highly detailed, volumetric, dramatic lighting",
+        "negative_prompt": "ugly, deformed, noisy, low poly, blurry, painting"
+    },
+    {
+        "name": "sai-anime",
+        "prompt": "anime artwork {prompt} . anime style, key visual, vibrant, studio anime,  highly detailed",
+        "negative_prompt": "photo, deformed, black and white, realism, disfigured, low contrast"
+    },
+    {
+        "name": "sai-cinematic",
+        "prompt": "cinematic film still {prompt} . shallow depth of field, vignette, highly detailed, high budget, bokeh, cinemascope, moody, epic, gorgeous, film grain, grainy",
+        "negative_prompt": "anime, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured"
+    },
+    {
+        "name": "sai-enhance",
+        "prompt": "breathtaking {prompt} . award-winning, professional, highly detailed",
+        "negative_prompt": "ugly, deformed, noisy, blurry, distorted, grainy"
+    },
+    {
+        "name": "sai-fantasy art",
+        "prompt": "ethereal fantasy concept art of  {prompt} . magnificent, celestial, ethereal, painterly, epic, majestic, magical, fantasy art, cover art, dreamy",
+        "negative_prompt": "photographic, realistic, realism, 35mm film, dslr, cropped, frame, text, deformed, glitch, noise, noisy, off-center, deformed, cross-eyed, closed eyes, bad anatomy, ugly, disfigured, sloppy, duplicate, mutated, black and white"
+    },
+    {
+        "name": "sai-photographic",
+        "prompt": "cinematic photo {prompt} . 35mm photograph, film, bokeh, professional, 4k, highly detailed",
+        "negative_prompt": "drawing, painting, crayon, sketch, graphite, impressionist, noisy, blurry, soft, deformed, ugly"
+    },
+    {
+        "name": "sai-texture",
+        "prompt": "texture {prompt} top down close-up",
+        "negative_prompt": "ugly, deformed, noisy, blurry"
+    },
+    {
+        "name": "ads-retail",
+        "prompt": "Retail packaging style {prompt} . Vibrant, enticing, commercial, product-focused, eye-catching, professional, highly detailed",
+        "negative_prompt": "noisy, blurry, amateurish, sloppy, unattractive"
+    },
+    {
+        "name": "artstyle-art nouveau",
+        "prompt": "Art Nouveau style {prompt} . elegant, decorative, curvilinear forms, nature-inspired, ornate, detailed",
+        "negative_prompt": "ugly, deformed, noisy, blurry, low contrast, realism, photorealistic, modernist, minimalist"
+    },
+    {
+        "name": "artstyle-renaissance",
+        "prompt": "Renaissance style {prompt} . realistic, perspective, light and shadow, religious or mythological themes, highly detailed",
+        "negative_prompt": "ugly, deformed, noisy, blurry, low contrast, modernist, minimalist, abstract"
+    },
+    {
+        "name": "game-rpg fantasy game",
+        "prompt": "role-playing game (RPG) style fantasy {prompt} . detailed, vibrant, immersive, reminiscent of high fantasy RPG games",
+        "negative_prompt": "sci-fi, modern, urban, futuristic, low detailed"
+    },
+    {
+        "name": "misc-dystopian",
+        "prompt": "dystopian style {prompt} . bleak, post-apocalyptic, somber, dramatic, highly detailed",
+        "negative_prompt": "ugly, deformed, noisy, blurry, low contrast, cheerful, optimistic, vibrant, colorful"
+    },
+    {
+        "name": "misc-space",
+        "prompt": "space-themed {prompt} . cosmic, celestial, stars, galaxies, nebulas, planets, science fiction, highly detailed",
+        "negative_prompt": "earthly, mundane, ground-based, realism"
+    },
+    {
+        "name": "misc-stained glass",
+        "prompt": "stained glass style {prompt} . vibrant, beautiful, translucent, intricate, detailed",
+        "negative_prompt": "ugly, deformed, noisy, blurry, low contrast, realism, photorealistic"
+    },
+    {
+        "name": "photo-tilt-shift",
+        "prompt": "tilt-shift photo of {prompt} . Selective focus, miniature effect, blurred background, highly detailed, vibrant, perspective control",
+        "negative_prompt": "blurry, noisy, deformed, flat, low contrast, unrealistic, oversaturated, underexposed"
+    }
+]
