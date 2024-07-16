@@ -26,7 +26,6 @@ class Noise_MixedNoise(AbstractNoise):
             mixed_noise = mixed_noise * (mask) + noise1 * (1.0-mask)
         return (mixed_noise,)
 
-
 class MixNoise:
     CATEGORY = "quicknodes"
     @classmethod    
@@ -47,21 +46,5 @@ class MixNoise:
 
     def func(self, noise1, noise2, weight2, mask=None):
         return (Noise_MixedNoise(noise1, noise2, weight2, mask),)
-    
-class MixNoise:
-    CATEGORY = "quicknodes"
-    @classmethod    
-    def INPUT_TYPES(s):
-        return { "required":  { 
-            "noise1": ("NOISE",), 
-            "noise2": ("NOISE",), 
-            "weight2": ("FLOAT", {"default":0.01, "step":0.001})
-        }}
 
-    RETURN_TYPES = ("NOISE",)
-    FUNCTION = "func"
-
-    def func(self, noise1, noise2, weight2):
-        return (Noise_MixedNoise(noise1, noise2, weight2),)
-
-CLAZZES = [MixNoise, MaskMixNoise]
+CLAZZES = [MixNoise]
