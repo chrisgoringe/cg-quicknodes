@@ -21,7 +21,7 @@ class Noise_MixedNoise(AbstractNoise):
         noise2 = self.noise2.generate_noise(input_latent)
         mixed_noise = noise1 * (1.0-self.weight2) + noise2 * (self.weight2)
         
-        if self.mask:
+        if self.mask is not None:
             mask = torch.nn.functional.interpolate(self.mask.unsqueeze(), size=input_latent.size, mode='bilinear')
             mixed_noise = mixed_noise * (mask) + noise1 * (1.0-mask)
         return (mixed_noise,)
