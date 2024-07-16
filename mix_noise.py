@@ -13,7 +13,7 @@ class Noise_MixedNoise(AbstractNoise):
 
     def generate_noise(self, input_latent:torch.Tensor) -> torch.Tensor:
         return self.noise1.generate_noise(input_latent) * (1.0-self.weight2) + \
-               self.noise2.generate_noise(input_latent) * (self.w1)
+               self.noise2.generate_noise(input_latent) * (self.weight2)
 
 class MixNoise:
     CATEGORY = "quicknodes"
