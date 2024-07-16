@@ -8,7 +8,7 @@ function displayMessage(message) {
 		w = ComfyWidgets["STRING"](this, "display_text_widget", ["STRING", { multiline: true }], app).widget;
 		w.inputEl.readOnly = true;
 		w.inputEl.style.opacity = 0.6;
-		w.inputEl.style.fontSize = "9pt";
+		w.inputEl.style.fontSize = "12pt";
 	}
 	w.value = message;
 	this.onResize?.(this.size);
@@ -27,7 +27,7 @@ app.registerExtension({
         api.addEventListener("cg.quicknodes.textmessage", messageHandler);
     },
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
-        if (nodeType.comfyClass=="DisplayText") {
+        if (nodeType.comfyClass=="DisplayText" || nodeType.comfyClass=="DisplayLength") {
             nodeType.prototype.displayMessage = displayMessage;
         }
     }
