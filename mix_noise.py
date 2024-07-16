@@ -22,7 +22,7 @@ class MixNoise:
         return { "required":  { 
             "noise1": ("NOISE",), 
             "noise2": ("NOISE",), 
-            "weight2": ("float", {"default":0.01, "step":0.001})
+            "weight2": ("FLOAT", {"default":0.01, "step":0.001})
         }}
 
     RETURN_TYPES = ("NOISE",)
