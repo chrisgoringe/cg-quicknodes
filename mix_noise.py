@@ -24,13 +24,14 @@ class Noise_MixedNoise(AbstractNoise):
         
         if self.mask is not None:
             while len(self.mask.shape)<4: self.mask.unsqueeze_(0)
-            mask = torch.nn.functional.interpolate(self.mask, size=input_latent['samples'].shape[-2:], mode='bilinear')
+            mask:torch.Tensor = torch.nn.functional.interpolate(self.mask, size=input_latent['samples'].shape[-2:], mode='bilinear')
+            mask = mask.expand(-1,noise1.shape[1],-1,-1)
             mixed_noise = mixed_noise * (mask) + noise1 * (1.0-mask)
 
         if self.renormalise:
             std, mean = torch.std_mean(mixed_noise)
             mixed_noise = (mixed_noise - mean)/(std+1e-8)
-            
+
         return mixed_noise
 
 class MixNoise:
