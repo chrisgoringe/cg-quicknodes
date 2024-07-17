@@ -11,6 +11,7 @@ class Noise_MixedNoise(AbstractNoise):
     noise1:AbstractNoise
     noise2:AbstractNoise
     weight2:float
+    renormalise:bool
     mask:Union[torch.Tensor, None] = None
 
     @property
@@ -25,6 +26,11 @@ class Noise_MixedNoise(AbstractNoise):
             while len(self.mask.shape)<4: self.mask.unsqueeze_(0)
             mask = torch.nn.functional.interpolate(self.mask, size=input_latent['samples'].shape[-2:], mode='bilinear')
             mixed_noise = mixed_noise * (mask) + noise1 * (1.0-mask)
+
+        if self.renormalise:
+            std, mean = torch.std_mean(mixed_noise)
+            mixed_noise = (mixed_noise - mean)/(std+1e-8)
+            
         return mixed_noise
 
 class MixNoise:
@@ -35,7 +41,8 @@ class MixNoise:
             "required":  { 
                 "noise1": ("NOISE",), 
                 "noise2": ("NOISE",), 
-                "weight2": ("FLOAT", {"default":0.01, "step":0.001})
+                "weight2": ("FLOAT", {"default":0.01, "step":0.001}),
+                "renormalise": (["yes","no"],),
                 }, 
             "optional" : {
                 "mask": ("MASK",),
@@ -45,7 +52,7 @@ class MixNoise:
     RETURN_TYPES = ("NOISE",)
     FUNCTION = "func"
 
-    def func(self, noise1, noise2, weight2, mask=None):
-        return (Noise_MixedNoise(noise1, noise2, weight2, mask),)
+    def func(self, noise1, noise2, weight2, renormalise, mask=None):
+        return (Noise_MixedNoise(noise1, noise2, weight2, renormalise, mask),)
 
 CLAZZES = [MixNoise]
