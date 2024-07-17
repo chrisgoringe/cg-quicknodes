@@ -54,6 +54,6 @@ class MixNoise:
     FUNCTION = "func"
 
     def func(self, noise1, noise2, weight2, renormalise, mask=None):
-        return (Noise_MixedNoise(noise1, noise2, weight2, renormalise, mask),)
+        return (Noise_MixedNoise(noise1, noise2, weight2, renormalise=='yes', mask),)
 
 CLAZZES = [MixNoise]
