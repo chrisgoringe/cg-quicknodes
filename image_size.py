@@ -2,7 +2,7 @@ import torch
 from server import PromptServer
 
 class ImageSize:
-    CATEGORY = "utilities/images"
+    CATEGORY = "quicknodes"
     @classmethod
     def INPUT_TYPES(s):
        return {"required": { "image": ("IMAGE",), }, "hidden": { "node_id": "UNIQUE_ID" }  }
