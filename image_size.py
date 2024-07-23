@@ -28,9 +28,9 @@ class MaskToBlack:
         if len(mask.shape)==2: mask.unsqueeze_(0)
         invert = (invert=="yes")
         out_images = []
-        for img, msk in zip(image, msk):
+        for img, msk in zip(image, mask):
             if invert: msk = 1.0 - msk
-            out_images.append( torch.where(msk.expand((-1,-1,-1,3)), torch.zeros_like(image), image) )
+            out_images.append( torch.where(msk.expand((-1,-1,3)), torch.zeros_like(image), image) )
         return (torch.stack( out_images, dim=0 ), )
 
 CLAZZES = [ ImageSize, MaskToBlack, ]
