@@ -3,6 +3,7 @@ from server import PromptServer
 
 class ImageSize:
     CATEGORY = "utilities/images"
+    @classmethod
     def INPUT_TYPES(s):
        return {"required": { "image": ("IMAGE",), }, "hidden": { "node_id": "UNIQUE_ID" }  }
     RETURN_TYPES = ()
