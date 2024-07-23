@@ -11,7 +11,7 @@ class ImageSize:
     OUTPUT_NODE = True
     FUNCTION = "func"
 
-    def func(self, image, node_id):
+    def func(self, image:torch.Tensor, node_id:int):
         b, h, w, c = image.shape
         PromptServer.instance.send_sync("cg.quicknodes.textmessage", {"id": node_id, "message":f"{w} x {h}"})
         return ()
@@ -24,13 +24,13 @@ class MaskToBlack:
     RETURN_TYPES = ( "IMAGE", )
     FUNCTION = "func"
 
-    def func(self, image, mask, invert):
+    def func(self, image:torch.Tensor, mask:torch.Tensor, invert:str):
         if len(mask.shape)==2: mask.unsqueeze_(0)
         invert = (invert=="yes")
         out_images = []
         for img, msk in zip(image, msk):
             if invert: msk = 1.0 - msk
-            out_images.append( torch.where(msk.expand((-1,-1,3)), torch.zeros_like(image), image) )
+            out_images.append( torch.where(msk.expand((-1,-1,-1,3)), torch.zeros_like(image), image) )
         return (torch.stack( out_images, dim=0 ), )
 
 CLAZZES = [ ImageSize, MaskToBlack, ]
