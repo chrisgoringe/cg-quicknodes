@@ -30,4 +30,25 @@ class MaskToBlack:
             out_images.append( torch.where(msk.unsqueeze(-1).expand((-1,-1,3))>0.5, torch.zeros_like(img), img) )
         return (torch.stack( out_images, dim=0 ), )
     
-CLAZZES = [InvertMaskOptional, MaskToBlack, ]
+class OutpaintBlack:
+    CATEGORY = "quicknodes"
+    @classmethod
+    def INPUT_TYPES(s):
+        return { "required": {
+                "image": ("IMAGE",),
+                "left": ("INT", {"default": 0, "min": 0, "max": 1024, "step": 8}),
+                "top": ("INT", {"default": 0, "min": 0, "max": 1024, "step": 8}),
+                "right": ("INT", {"default": 0, "min": 0, "max": 1024, "step": 8}),
+                "bottom": ("INT", {"default": 0, "min": 0, "max": 1024, "step": 8}),
+        } }
+    RETURN_TYPES = ("IMAGE",)
+    FUNCTION = "func"
+
+    def expand_image(self, image, left, top, right, bottom):
+        B, H, W, C = image.size()
+        new_image = torch.zeros( (B, H + top + bottom, W + left + right, C),  dtype=torch.float32  )
+        new_image[:, top:top + H, left:left + W, :] = image
+        return (new_image, )
+
+    
+CLAZZES = [InvertMaskOptional, MaskToBlack, OutpaintBlack, ]
