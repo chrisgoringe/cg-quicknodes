@@ -35,15 +35,15 @@ class OutpaintBlack:
     def INPUT_TYPES(s):
         return { "required": {
                 "image": ("IMAGE",),
-                "left": ("INT", {"default": 0, "min": 0, "max": 1024, "step": 8}),
-                "top": ("INT", {"default": 0, "min": 0, "max": 1024, "step": 8}),
-                "right": ("INT", {"default": 0, "min": 0, "max": 1024, "step": 8}),
-                "bottom": ("INT", {"default": 0, "min": 0, "max": 1024, "step": 8}),
+                "left": ("INT", {"default": 0, "min": 0, "max": 1024, "step": 1}),
+                "top": ("INT", {"default": 0, "min": 0, "max": 1024, "step": 1}),
+                "right": ("INT", {"default": 0, "min": 0, "max": 1024, "step": 1}),
+                "bottom": ("INT", {"default": 0, "min": 0, "max": 1024, "step": 1}),
         } }
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "func"
 
-    def expand_image(self, image, left, top, right, bottom):
+    def func(self, image, left, top, right, bottom):
         B, H, W, C = image.size()
         new_image = torch.zeros( (B, H + top + bottom, W + left + right, C),  dtype=torch.float32  )
         new_image[:, top:top + H, left:left + W, :] = image
