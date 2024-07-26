@@ -1,6 +1,6 @@
 import sys, os, importlib, re, os
 sys.path.insert(0,os.path.dirname(os.path.realpath(__file__)))
-from .common import module_root_directory
+module_root_directory = os.path.dirname(os.path.realpath(__file__))
 
 NODE_CLASS_MAPPINGS= {}
 NODE_DISPLAY_NAME_MAPPINGS = {}

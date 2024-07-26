@@ -3,6 +3,19 @@ import os, torch
 from PIL import Image, ImageOps
 import numpy as np
 import hashlib
+from nodes import SaveImage
+
+class SaveFilename(SaveImage):
+    CATEGORY = "quicknodes"
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAME = ("filename",)
+    FUNCTION = "func"
+
+    def func(self, **kwargs):
+        ret = self.save_images(**kwargs)
+        ret['result'] = ( ret['ui']['images'][0]['filename'], )
+        return ret
 
 class LoadImageWithFilename():
     RETURN_TYPES = ("IMAGE", "MASK", "STRING",)
@@ -15,7 +28,7 @@ class LoadImageWithFilename():
         files = [f for f in os.listdir(cls.directory) if os.path.isfile(os.path.join(cls.directory, f))]
         return {"required": {"image": (sorted(files), {"image_upload": True})}, }
 
-    CATEGORY = "image"
+    CATEGORY = "quicknodes"
 
     def func(self, image):
         image_path = os.path.join(self.directory,image)

@@ -12,7 +12,6 @@ class InvertMaskOptional:
     def func(self, mask, invert):
         return (1. - mask,) if invert=="yes" else (mask,)
     
-    
 class MaskToBlack:
     CATEGORY = "quicknodes"
     @classmethod

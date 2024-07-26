@@ -16,5 +16,4 @@ class ImageSize:
         PromptServer.instance.send_sync("cg.quicknodes.textmessage", {"id": node_id, "message":f"{w} x {h}"})
         return ()
 
-
 CLAZZES = [ ImageSize, ]
