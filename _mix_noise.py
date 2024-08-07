@@ -98,8 +98,8 @@ class MixNoise:
                 "renormalise": (["yes","no"],),
                 }, 
             "optional" : {
-                "noise2": ("NOISE",), 
-                "mask":   ("MASK",),
+                "noise2":      ("NOISE",), 
+                "mask":        ("MASK",),
             }
         }
 
