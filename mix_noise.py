@@ -63,10 +63,10 @@ class Noise_ShapedNoise(NormalisableNoise):
     def _generate_noise(self, input_latent:torch.Tensor) -> torch.Tensor:
         def offset_sine(length:int) -> list[float]: return [ 2*sin(pi*x/length)-1 for x in range(length) ]
         noise = self.noise.generate_noise(input_latent)
-        b,c,w,h = noise.shape
-        xscale = torch.Tensor([1.0 for _ in range(w)]) + (self.weight * torch.Tensor(offset_sine(w)) if self.x else 0)
-        yscale = torch.Tensor([1.0 for _ in range(h)]) + (self.weight * torch.Tensor(offset_sine(h)) if self.y else 0)
-        noise = noise * (torch.matmul(xscale.unsqueeze(0).T,yscale.unsqueeze(0)))
+        b,c,h,w = noise.shape
+        xscale = torch.ones((w,1)) + (self.weight * torch.Tensor([offset_sine(w),]) if self.x else 0)
+        yscale = torch.ones((h,1)) + (self.weight * torch.Tensor([offset_sine(h),]) if self.y else 0)
+        noise = noise * (torch.matmul(yscale.T,xscale))
         return noise
 
 class ShapeNoise:
