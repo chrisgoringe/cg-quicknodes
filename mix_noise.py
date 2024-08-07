@@ -60,15 +60,12 @@ class Noise_ShapedNoise(NormalisableNoise):
     @property
     def seed(self): return self.noise.seed
 
-    def offset_sine(length:int) -> list[float]:
-        'A half sine wave offset to (minimum -1, maximum 1) in a list of length `length`'
-        return [ 2*sin(pi*x/length)-1 for x in range(length) ]
-
     def _generate_noise(self, input_latent:torch.Tensor) -> torch.Tensor:
+        def offset_sine(length:int) -> list[float]: return [ 2*sin(pi*x/length)-1 for x in range(length) ]
         noise = self.noise.generate_noise(input_latent)
         b,c,w,h = noise.shape
-        xscale = torch.Tensor([1.0 for _ in range(w)]) + (self.weight * torch.Tensor(self.offset_sine(w)) if self.x else 0)
-        yscale = torch.Tensor([1.0 for _ in range(h)]) + (self.weight * torch.Tensor(self.offset_sine(h)) if self.y else 0)
+        xscale = torch.Tensor([1.0 for _ in range(w)]) + (self.weight * torch.Tensor(offset_sine(w)) if self.x else 0)
+        yscale = torch.Tensor([1.0 for _ in range(h)]) + (self.weight * torch.Tensor(offset_sine(h)) if self.y else 0)
         noise = noise * (torch.matmul(xscale.unsqueeze(0).T,yscale.unsqueeze(0)))
         return noise
 
