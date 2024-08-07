@@ -66,7 +66,7 @@ class Noise_ShapedNoise(NormalisableNoise):
 
     def _generate_noise(self, input_latent:torch.Tensor) -> torch.Tensor:
         noise = self.noise.generate_noise(input_latent)
-        w,h = noise.shape
+        b,c,w,h = noise.shape
         xscale = torch.Tensor([1.0 for _ in range(w)]) + (self.weight * torch.Tensor(self.offset_sine(w)) if self.x else 0)
         yscale = torch.Tensor([1.0 for _ in range(h)]) + (self.weight * torch.Tensor(self.offset_sine(h)) if self.y else 0)
         noise = noise * (torch.matmul(xscale.unsqueeze(0).T,yscale.unsqueeze(0)))
