@@ -78,10 +78,10 @@ class ShapeNoise:
     def INPUT_TYPES(s):
         return { 
             "required":  { 
-                "noise": ("NOISE",), 
-                "weight": ("FLOAT", {"default":0.01, "step":0.001, "min":-1.0, "max":1.0}),
+                "noise":       ("NOISE",), 
+                "weight":      ("FLOAT", {"default":0.01, "step":0.001, "min":-1.0, "max":1.0}),
                 "renormalise": (["yes","no"],),
-                "mode": (["xy","x","y"]),
+                "mode":        (["xy","x","y"],),
             }, 
         }
     RETURN_TYPES = ("NOISE",)
@@ -96,13 +96,13 @@ class MixNoise:
     def INPUT_TYPES(s):
         return { 
             "required":  { 
-                "noise1": ("NOISE",), 
-                "weight2": ("FLOAT", {"default":0.01, "step":0.001, "min":-1.0, "max":1.0}),
+                "noise1":      ("NOISE",), 
+                "weight2":     ("FLOAT", {"default":0.01, "step":0.001, "min":-1.0, "max":1.0}),
                 "renormalise": (["yes","no"],),
                 }, 
             "optional" : {
                 "noise2": ("NOISE",), 
-                "mask": ("MASK",),
+                "mask":   ("MASK",),
             }
         }
 
