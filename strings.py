@@ -1,3 +1,15 @@
+class JustAString:
+    class CombineStrings:
+        FUNCTION = "func"
+        CATEGORY = "quicknodes"
+        @classmethod
+        def INPUT_TYPES(s):
+            return {
+                "required": {"string": ("STRING", {"default":"", "multiline":True })},
+            }
+        RETURN_TYPES = ("STRING",)
+        def func(self, string:str):
+            return (string,)
 
 class CombineStrings:
     FUNCTION = "func"
