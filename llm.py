@@ -1,10 +1,14 @@
 import requests
 
-def llm(topic, style, server):
-    message = [
+
+def llm(topic, style, server, prompting_format=0):
+    message = [[
+        "<<SYS>",
         "You are an AI assistant specialized in creating detailed prompts for image generation based on given topics and styles. ",
         "Your task is to analyze the input and create a comprehensive, creative, and coherent prompt that can guide an image generation AI to produce a vivid and accurate representation of the described scene or concept.",
-        "Please create a detailed image generation prompt based on the following information:",
+        "<</SYS>>",
+        "[INST]"
+        "Create a detailed image generation prompt based on the following information:",
         f"Topic: {topic}",
         f"Style: {style}",
         "Your prompt should include the following elements :",
@@ -14,9 +18,8 @@ def llm(topic, style, server):
         "4. Any specific actions or poses for characters",
         "5. Important objects or elements to include",
         "6. Overall mood or emotion to convey",
-        " ",
-        "Here's your prompt: ",
-    ]
+        "[/INST]"
+    ]][prompting_format]
 
     r = {
         "max_context_length": 2048,
