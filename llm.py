@@ -1,11 +1,12 @@
 import requests
 
 
-def llm(topic, style, server, prompting_format=0):
+def llm(topic, style, server, settings:str, prompting_format=0, sampler_seed=None) -> str:
     message = [[
         "<<SYS>",
         "You are an AI assistant specialized in creating detailed prompts for image generation based on given topics and styles. ",
         "Your task is to analyze the input and create a comprehensive, creative, and coherent prompt that can guide an image generation AI to produce a vivid and accurate representation of the described scene or concept.",
+        "Your reply should just be the prompt",
         "<</SYS>>",
         "[INST]"
         "Create a detailed image generation prompt based on the following information:",
@@ -37,8 +38,31 @@ def llm(topic, style, server, prompting_format=0):
         "prompt": "\n".join(message)
     }
 
-    r = requests.post(server, json=r, verify=False)
-    return r.json()['results'][0]['text']
+    if sampler_seed: r['sampler_seed'] = sampler_seed
+
+    def magic_cast(x:str):
+        if x.lower()=='true': return True
+        if x.lower()=='false': return False
+        try: return int(x)
+        except: pass
+        try: return float(x)
+        except: return x
+
+    for s in settings.split(","):
+        try:
+            k,v = (x.strip() for x in s.split('='))
+            r[k] = magic_cast(v)
+        except ValueError: pass
+
+    def cleaned(s:str):
+        t = None
+        while t is None or len(t)!=len(s):
+            t = s
+            s = t.replace('<SYS>','').replace('</SYS>','').strip().strip('"').replace('<','').replace('>','')
+        return s
+
+    res = requests.post(server, json=r, verify=False)
+    return cleaned(res.json()['results'][0]['text'])
 
 class LLM:
     @classmethod
@@ -47,13 +71,16 @@ class LLM:
             "topic": ("STRING",{"default":"", "multiline":True}),
             "style": ("STRING",{"default":"", "multiline":True}),
             "server": ("STRING", {"default":".../api/v1/generate"}),
+            "settings": ("STRING",{"default":"", "multiline":True}),
+            "seed": ("INT", {"default":0, "min":0, "max":999999}),
         }}
 
     CATEGORY = "quicknodes"
-    RETURN_TYPES = ("STRING",)
+    RETURN_TYPES = ("STRING","STRING",)
+    RETURN_NAMES = ("expanded", "topic", )
     FUNCTION = "func"
-
-    def func(self, topic, style, server):
-        return (llm(topic, style, server), )
     
+    def func(self, topic, style, server, settings, seed=None, **kwargs):
+        return (llm(topic, style, server, settings, sampler_seed=seed), topic, )
+
 CLAZZES = [LLM]
