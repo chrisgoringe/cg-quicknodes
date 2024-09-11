@@ -18,4 +18,15 @@ class CommonSizes:
         x, y = [int(v) for v in size.split('x')]
         return (x,y)
     
-CLAZZES = [CommonSizes]
+class JustAnInteger:
+    CATEGORY = "quicknodes"
+    @classmethod    
+    def INPUT_TYPES(s):
+        return { "required":  { "number": ("INT", {"default":0}) } }
+    RETURN_TYPES = ("INT",)
+    RETURN_NAMES = ("number",)
+    FUNCTION = "func"
+    def func(self,number):
+        return (number,)
+    
+CLAZZES = [CommonSizes, JustAnInteger]
