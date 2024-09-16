@@ -1,15 +1,19 @@
-class JustAString:
-    class CombineStrings:
-        FUNCTION = "func"
-        CATEGORY = "quicknodes"
-        @classmethod
-        def INPUT_TYPES(s):
-            return {
-                "required": {"string": ("STRING", {"default":"", "multiline":True })},
-            }
-        RETURN_TYPES = ("STRING",)
-        def func(self, string:str):
-            return (string,)
+  
+class ToString:
+    FUNCTION = "func"
+    CATEGORY = "quicknodes"
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {},
+            "optional": { "int_": ("INT", {"forceInput":True}), "float_": ("FLOAT", {"forceInput":True}) }
+        }
+    RETURN_TYPES = ("STRING",)
+    def func(self, int_=None, float_=None):
+        s = ("" if int_ is None else str(int_))
+        t = ("" if float_ is None else str(float_))
+        result = f"{s}_{t}" if s and t else f"{s}{t}"
+        return (result,)    
 
 class CombineStrings:
     FUNCTION = "func"
@@ -36,4 +40,4 @@ class Substitute:
     def func(self, string:str, replace_, with_):
         return (string.replace(replace_, with_),)
     
-CLAZZES = [CombineStrings,Substitute]
+CLAZZES = [CombineStrings,Substitute, ToString]
