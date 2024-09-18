@@ -38,7 +38,7 @@ def llm(topic, style, server, settings:str, prompting_format=0, sampler_seed=Non
         "prompt": "\n".join(message)
     }
 
-    if sampler_seed: r['sampler_seed'] = sampler_seed
+    if sampler_seed: r['sampler_seed'] = sampler_seed % 1000000
 
     def magic_cast(x:str):
         if x.lower()=='true': return True

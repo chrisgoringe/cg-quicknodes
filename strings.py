@@ -6,12 +6,12 @@ class ToString:
     def INPUT_TYPES(s):
         return {
             "required": {},
-            "optional": { "int_": ("INT", {"forceInput":True}), "float_": ("FLOAT", {"forceInput":True}) }
+            "optional": { "int_": ("INT", {"forceInput":True}), "float_": ("FLOAT", {"forceInput":True}), "float_dp": ("INT", {"default":2}) }
         }
     RETURN_TYPES = ("STRING",)
-    def func(self, int_=None, float_=None):
+    def func(self, int_=None, float_=None, float_dp=2):
         s = ("" if int_ is None else str(int_))
-        t = ("" if float_ is None else str(float_))
+        t = ("" if float_ is None else f"{round(float_, float_dp)}")
         result = f"{s}_{t}" if s and t else f"{s}{t}"
         return (result,)    
 
