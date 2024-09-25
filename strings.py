@@ -13,7 +13,17 @@ class ToString:
         s = ("" if int_ is None else str(int_))
         t = ("" if float_ is None else f"{round(float_, float_dp)}")
         result = f"{s}_{t}" if s and t else f"{s}{t}"
-        return (result,)    
+        return (result,)   
+
+class ToInt:
+    FUNCTION = "func"
+    CATEGORY = "quicknodes"
+    @classmethod
+    def INPUT_TYPES(s):
+        return { "required": { "string" : ("STRING", {"forceInput":True}) }, }
+    RETURN_TYPES = ("INT",)
+    def func(self, string):
+        return (int(string),)      
 
 class CombineStrings:
     FUNCTION = "func"
@@ -24,9 +34,10 @@ class CombineStrings:
             "required": {"template": ("STRING", {"default":"[X] [Y]" })},
             "optional": { "x": ("STRING", {}), "y": ("STRING", {}) }
         }
-    RETURN_TYPES = ("STRING",)
+    RETURN_TYPES = ("STRING","STRING","STRING",)
+    RETURN_NAMES = ("merged","x","y")
     def func(self, template:str, x="", y=""):
-        return (template.replace("[X]",str(x)).replace("[Y]",str(y)),)
+        return (template.replace("[X]",str(x)).replace("[Y]",str(y)),x,y,)
     
 class Substitute:
     FUNCTION = "func"
@@ -40,4 +51,4 @@ class Substitute:
     def func(self, string:str, replace_, with_):
         return (string.replace(replace_, with_),)
     
-CLAZZES = [CombineStrings,Substitute, ToString]
+CLAZZES = [CombineStrings,Substitute, ToString, ToInt]

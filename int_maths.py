@@ -9,7 +9,7 @@ class SimpleMaths:
         elif op=="remainder": r = x%y
         return (r,f"{round(r,dp) if dp is not None else r}",)
 
-class SimpleIntegerMaths:
+class SimpleIntegerMaths(SimpleMaths):
     RETURN_TYPES = ("INT","STRING",)
     @classmethod    
     def INPUT_TYPES(s):
@@ -19,7 +19,7 @@ class SimpleIntegerMaths:
             "op": (["add","subtract","multiply","divide","remainder"],{}),
             } }
 
-class SimpleFloatMaths:
+class SimpleFloatMaths(SimpleMaths):
     RETURN_TYPES = ("FLOAT","STRING",)
     @classmethod    
     def INPUT_TYPES(s):
