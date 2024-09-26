@@ -23,7 +23,10 @@ class ToInt:
         return { "required": { "string" : ("STRING", {"forceInput":True}) }, }
     RETURN_TYPES = ("INT",)
     def func(self, string):
-        return (int(string),)      
+        try:
+            return (int(string),)   
+        except:
+            return (0,)   
 
 class CombineStrings:
     FUNCTION = "func"
