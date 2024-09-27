@@ -1,10 +1,11 @@
 {
     "pick1" : [
         "Rename this file as prompt_pick.json",
-        "For each pick, provide two strings, the first short, the second long"
+        "For each pick, 'short' is just the first line,",
+        "'long' is all the lines joined by spaces"
     ],
     "pick2" : [
-        "like this",
-        "and a longer version"
+        "So this will be short",
+        "but it can be made longer"
     ]
 }

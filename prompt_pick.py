@@ -16,6 +16,8 @@ class PromptPick:
     RETURN_NAMES = ("short","long")
     FUNCTION = "func"
     def func(self,pick):
-        return (*PromptPick[pick],)
+        p0 = PromptPick[pick][0]
+        p1 = " ".join(PromptPick[pick])
+        return (p0,p1,)
     
 CLAZZES = [PromptPick]
