@@ -11,13 +11,13 @@ class PromptPick:
     CATEGORY = "quicknodes"
     @classmethod    
     def INPUT_TYPES(s):
-        return { "required":  { "pick": ([k for k in PromptPick.options] ) } }
+        return { "required":  { "pick": (list(k for k in PromptPick.options),{} ) } }
     RETURN_TYPES = ("STRING","STRING")
     RETURN_NAMES = ("short","long")
     FUNCTION = "func"
     def func(self,pick):
-        p0 = PromptPick[pick][0]
-        p1 = " ".join(PromptPick[pick])
+        p0 = PromptPick.options[pick][0]
+        p1 = " ".join(PromptPick.options[pick])
         return (p0,p1,)
     
 CLAZZES = [PromptPick]
