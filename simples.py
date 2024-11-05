@@ -14,7 +14,7 @@ class SimpleInt(Simple):
 class SimpleFloat(Simple):
     RETURN_TYPES = ("FLOAT",)
     @classmethod
-    def extras(s): return {"default":0.0}        
+    def extras(s): return {"default":0.0, "min":-10000, "max":10000}        
 
 class SimpleString(Simple):
     RETURN_TYPES = ("STRING",)

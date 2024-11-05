@@ -6,15 +6,29 @@ class ToString:
     def INPUT_TYPES(s):
         return {
             "required": {},
-            "optional": { "int_": ("INT", {"forceInput":True}), "float_": ("FLOAT", {"forceInput":True}), "float_dp": ("INT", {"default":2}) }
+            "optional": { 
+                "format_": ("STRING", {"default":"", "tooltip":"Optional python formnat string. Overrides float_dp."}),
+                "int_": ("INT", {"forceInput":True, "tooltip":"Optional. Ignored if float_ provided."}), 
+                "float_": ("FLOAT", {"forceInput":True, "tooltip":"Optional. Takes precedence over int_"}), 
+                "float_dp": ("INT", {"default":2, "tooltip":"If no format string, and using float_, round to this number of decimal places."}) }
         }
     RETURN_TYPES = ("STRING",)
-    def func(self, int_=None, float_=None, float_dp=2):
-        s = ("" if int_ is None else str(int_))
-        t = ("" if float_ is None else f"{round(float_, float_dp)}")
-        result = f"{s}_{t}" if s and t else f"{s}{t}"
-        return (result,)   
 
+    def wrap_format(self,f):
+        if not f.startswith('{'): f = '{' + f
+        if not f.endswith('}'): f = f + '}'
+        return f
+    
+    def func(self, format_="", int_=None, float_=None, float_dp=2):
+        if float_:
+            if format_:  return (self.wrap_format(format_.strip()).format(float_),)
+            if float_dp: return (f"{round(float_, float_dp)}",)
+            else:        return (f"{float_}",)
+        elif int_:       
+            if format_:  return (self.wrap_format(format_.strip()).format(int_),)
+            else:        return (f"{int_}",)
+        else:            return ("",)
+  
 class ToInt:
     FUNCTION = "func"
     CATEGORY = "quicknodes"

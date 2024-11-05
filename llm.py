@@ -13,6 +13,7 @@ class LLM:
             "settings": ("STRING",{"default":"max_length=150, temperature=0.7", "multiline":True, "tooltip":"Comma separated key=value pairs"}),
             "seed": ("INT", {"default":0, "min":0, "max":999999}),
             "prompt_format": ([k for k in formats], {}),
+            "active": ("BOOLEAN", {"default":True}),
         }}
 
     CATEGORY = "quicknodes"
@@ -20,7 +21,8 @@ class LLM:
     RETURN_NAMES = ("expanded", "topic", )
     FUNCTION = "func"
     
-    def func(self, topic, style, server, settings, seed, prompt_format):
+    def func(self, topic, style, server, settings, seed, prompt_format,active):
+        if not active: return (topic,topic,)
         message = format_prompt(prompt_format, topic, style)
         r = get_payload(message, sampler_seed=seed, settings=settings.split(","))
         res = requests.post(server, json=r, verify=False)

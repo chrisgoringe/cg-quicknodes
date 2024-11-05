@@ -10,7 +10,25 @@ def parse_string(string):
     return (string, f, i, w, h)
 
 def to_string_list(options):
-    return list( o.strip() for o in options.split("\n") if o.strip() )
+    lines = ( o.split("#")[0].strip() for o in options.split("\n") if o )
+    return list( line for line in lines if line )
+
+class RandomFloats:
+    RETURN_TYPES = ("FLOAT", "FLOAT", "FLOAT")
+    CATEGORY = "quicknodes/random"
+    FUNCTION = "func"
+    @classmethod    
+    def INPUT_TYPES(s):
+        return { "required":  { 
+            "seed": ("INT", {"default":0, "min":0, "max":1e9}),
+            "_min": ("FLOAT", {"default":0, "min": -1000, "max":1000}),
+            "_max": ("FLOAT", {"default":0, "min": -1000, "max":1000}),
+            "_round": ("INT", {"default":2, "min": 0, "max":10})
+        }}
+    
+    def func(self, seed, _min, _max, _round):
+        random.seed(seed)
+        return tuple(round(_min + (_max-_min)*random.random(), _round) for _ in range(3))
 
 class Base:
     RETURN_TYPES = ("STRING", "FLOAT", "INT", "INT", "INT")
@@ -32,14 +50,15 @@ class ListFromList(Base):
         return results
 
 class RandomFromList(Base):
+    CATEGORY = "quicknodes/random"
     @classmethod    
     def INPUT_TYPES(s):
-        return { "required":  { "seed": ("INT", {"default":0, "min":0, "max":1e9}),
+        return { "required":  { "seed": ("INT", {"default":0, "min":-1e9, "max":1e9}),
                                "options": ("STRING", {"default":"", "multiline": True})} }
 
     def func(self,seed,options):
         random.seed(seed)
-        string = random.choice( to_string_list(options)) 
+        string = random.choice( to_string_list(options) ) 
         return parse_string(string)
     
-CLAZZES = [ListFromList, RandomFromList]
+CLAZZES = [ListFromList, RandomFromList, RandomFloats]

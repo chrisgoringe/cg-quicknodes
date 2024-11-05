@@ -2,6 +2,7 @@ import json, os
 
 class PromptPick:
     path = os.path.join(os.path.dirname(__file__), "resources", "prompt_pick.json")
+    
     options = {}
     if not os.path.exists(path):
         print(f"{path} not found")
@@ -16,8 +17,14 @@ class PromptPick:
     RETURN_NAMES = ("short","long")
     FUNCTION = "func"
     def func(self,pick):
-        p0 = PromptPick.options[pick][0]
-        p1 = " ".join(PromptPick.options[pick])
+        with open(PromptPick.path, "r") as f: options = json.load(f)
+        p0 = options[pick][0]
+        p1 = " ".join(options[pick])
         return (p0,p1,)
+    
+    @classmethod
+    def IS_CHANGED(self,pick):
+        with open(PromptPick.path, "r") as f: options = json.load(f)
+        return (" ".join(options[pick]),)
     
 CLAZZES = [PromptPick]

@@ -17,7 +17,19 @@ class ImageSize:
         PromptServer.instance.send_sync("cg.quicknodes.textmessage", {"id": node_id, "message":f"{w} x {h}"})
         return ()
     
+class SizePicker:
+    CATEGORY = "quicknodes"
+    @classmethod
+    def INPUT_TYPES(s):
+       return {"required": { "size": (['1024x1024','768x1024','1024x768','1600x900'],), }  }
+    
+    RETURN_TYPES = ("INT","INT")
+    RETURN_NAMES = ("w","h")
+    FUNCTION = "func"
 
+    def func(self, size):
+        return tuple(int(x) for x in size.split("x"))
+    
 
 class ResizeImage:
     CATEGORY = "quicknodes"
@@ -80,4 +92,4 @@ class ResizeImage:
                 self.resize(image_to_match if image_to_match is not None else image, height, width),
                 width, height, f"{width}x{height}") 
 
-CLAZZES = [ ImageSize, ResizeImage]
+CLAZZES = [ ImageSize, ResizeImage, SizePicker]

@@ -25,9 +25,9 @@ class IntList(List):
 class FloatList(List):
     @classmethod    
     def INPUT_TYPES(s): return { "required":  { 
-        "start": ("FLOAT",{"default":0}), 
+        "start": ("FLOAT",{"default":0,"min":-20000,"max":20000}), 
         "step" : ("FLOAT",{"default":0.1}),
-        "end" :  ("FLOAT",{"default":1}),
+        "end" :  ("FLOAT",{"default":1,"min":-20000,"max":20000}),
         } }
     RETURN_TYPES = ("FLOAT",)
 
@@ -38,9 +38,9 @@ class Permutations:
     RETURN_TYPES = ("FLOAT","FLOAT","FLOAT")
     @classmethod    
     def INPUT_TYPES(s): return { "required":  { 
-        "start" : ("FLOAT",{"default":0, "step":0.01}), 
-        "step"  : ("FLOAT",{"default":0.1, "step":0.01}),
-        "steps" : ("INT",{"default":1, "min":1}),
+        "start" : ("FLOAT",{"default":1, "step":0.05, "min":-2, "max":2}), 
+        "step"  : ("FLOAT",{"default":0.1, "step":0.05,"min":0,"max":2}),
+        "steps" : ("INT",{"default":1, "min":1, "max":10}),
         "outs"  : ("INT",{"default":3, "min":1, "max":3}),
         } }
     

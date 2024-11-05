@@ -27,7 +27,8 @@ app.registerExtension({
         api.addEventListener("cg.quicknodes.textmessage", messageHandler);
     },
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
-        if (nodeType.comfyClass=="DisplayText" || nodeType.comfyClass=="DisplayLength" || nodeType.comfyClass=="ImageSize") {
+        if (nodeType.comfyClass=="DisplayText" || nodeType.comfyClass=="DisplayList" || 
+            nodeType.comfyClass=="DisplayLength" || nodeType.comfyClass=="ImageSize") {
             nodeType.prototype.displayMessage = displayMessage;
         }
     }
