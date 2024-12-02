@@ -1,0 +1,17 @@
+[
+    {
+        "name": "base",
+        "prompt": "{prompt}",
+        "negative_prompt": ""
+    },
+    {
+        "name": "illustrious",
+        "prompt": "{prompt}, best quality, masterpiece",
+        "negative_prompt": "(lowres:1.2), (worst quality:1.4), (low quality:1.4), (bad anatomy:1.4)"
+    },
+    {
+        "name": "rillustrious.realism",
+        "prompt": "{prompt}, best quality, masterpiece, (realism:1.2), (real life:1.2)",
+        "negative_prompt": "(lowres:1.2), (worst quality:1.4), (low quality:1.4), (bad anatomy:1.4). asian, anime, cartoon, 3d, render"
+    }
+]
