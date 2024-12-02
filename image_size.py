@@ -21,14 +21,21 @@ class SizePicker:
     CATEGORY = "quicknodes"
     @classmethod
     def INPUT_TYPES(s):
-       return {"required": { "size": (['1024x1024','768x1024','1024x768','1600x900'],), }  }
+       return {"required": { 
+           "size": (['1024x1024', '1152x896', '1216x832', '1344x768', '1536x640', '1600x900', ],), 
+           "orientation": (["landscape", "portrait"],)
+           }  }
     
     RETURN_TYPES = ("INT","INT")
     RETURN_NAMES = ("w","h")
     FUNCTION = "func"
 
-    def func(self, size):
-        return tuple(int(x) for x in size.split("x"))
+    def func(self, size, orientation):
+        wh = tuple(int(x) for x in size.split("x"))
+        if (orientation=="landscape"):
+            return wh
+        else:
+            return (wh[1], wh[0])
     
 
 class ResizeImage:

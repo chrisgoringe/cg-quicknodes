@@ -20,11 +20,11 @@ class ToString:
         return f
     
     def func(self, format_="", int_=None, float_=None, float_dp=2):
-        if float_:
+        if float_ is not None:
             if format_:  return (self.wrap_format(format_.strip()).format(float_),)
             if float_dp: return (f"{round(float_, float_dp)}",)
             else:        return (f"{float_}",)
-        elif int_:       
+        elif int_ is not None:       
             if format_:  return (self.wrap_format(format_.strip()).format(int_),)
             else:        return (f"{int_}",)
         else:            return ("",)
