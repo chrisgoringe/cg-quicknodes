@@ -1,4 +1,5 @@
-  
+from datetime import date
+
 class ToString:
     FUNCTION = "func"
     CATEGORY = "quicknodes"
@@ -48,13 +49,14 @@ class CombineStrings:
     @classmethod
     def INPUT_TYPES(s):
         return {
-            "required": {"template": ("STRING", {"default":"[X] [Y]" })},
+            "required": {"template": ("STRING", {"default":"[X] [Y]", "tooltip":"use [D] for date" })},
             "optional": { "x": ("STRING", {}), "y": ("STRING", {}) }
         }
     RETURN_TYPES = ("STRING","STRING","STRING",)
     RETURN_NAMES = ("merged","x","y")
     def func(self, template:str, x="", y=""):
-        return (template.replace("[X]",str(x)).replace("[Y]",str(y)),x,y,)
+        r = template.replace("[X]",str(x)).replace("[Y]",str(y)).replace('[D]',date.today().isoformat())
+        return (r,x,y,)
     
 class Substitute:
     FUNCTION = "func"
