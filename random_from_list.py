@@ -61,4 +61,27 @@ class RandomFromList(Base):
         string = random.choice( to_string_list(options) ) 
         return parse_string(string)
     
-CLAZZES = [ListFromList, RandomFromList, RandomFloats]
+class AppendRandomFromList:
+    CATEGORY = "quicknodes/random"
+    FUNCTION = "func"
+    @classmethod    
+    def INPUT_TYPES(s):
+        return {"required": {  
+                                "seed": ("INT", {"default":0, "min":-1e9, "max":1e9}),
+                                "seed_offset": ("INT", {"default":0, "min":-1e9, "max":1e9}),
+                                "divider": ("STRING", {"default":", "}),
+                                "options": ("STRING", {"default":"", "multiline": True})
+                            },
+                "optional": {   
+                                "in_string": ("STRING", {"default":"", "forceInput":True} ),
+                            }
+                }
+    RETURN_TYPES = ("STRING",)
+
+    def func(self,seed,seed_offset,divider,options,in_string=None):
+        random.seed(seed+seed_offset)
+        string = random.choice( to_string_list(options) ) 
+        if in_string: string = in_string + divider + string 
+        return (string,)   
+    
+CLAZZES = [ListFromList, RandomFromList, RandomFloats, AppendRandomFromList]

@@ -49,7 +49,14 @@ class _Shrink(_DetailerHook):
 
     def post_crop_region(self, w, h, item_bbox, crop_region):
         x1, y1, x2, y2 = crop_region
-        return ([x1-self.delta, y1-self.delta, x2+self.delta, y2+self.delta],)     
+        if x1-self.delta < x2+self.delta and x1-self.delta > 0 and x2+self.delta < w:
+            x1 -= self.delta
+            x2 += self.delta
+        if y1-self.delta < y2+self.delta and y1-self.delta > 0 and y2+self.delta < h:
+            y1 -= self.delta
+            y2 += self.delta
+        
+        return [x1, y1, x2, y2]    
 
 class Shrink:
     CATEGORY = "quicknodes/hooks"
