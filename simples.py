@@ -26,4 +26,9 @@ class SimpleMultilineString(Simple):
     @classmethod
     def extras(s): return {"default":"", "multiline":True}
 
-CLAZZES = [SimpleInt,SimpleFloat,SimpleString,SimpleMultilineString]
+class SimpleLatent(Simple):
+    RETURN_TYPES = ("LATENT",)
+    @classmethod
+    def extras(s): return {}    
+
+CLAZZES = [SimpleInt,SimpleFloat,SimpleString,SimpleMultilineString, SimpleLatent]

@@ -1,4 +1,4 @@
-import requests
+import requests, json
 from resources.prompt_formats import format_prompt, clean_reply, get_payload, formats
 
 class ServerException(Exception): pass
@@ -31,5 +31,40 @@ class LLM:
         else:
             raise ServerException(f"{res.url} returned {res.status_code} : {res.reason}")
         return (reply,topic,)
+    
+class Stash:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required": { "text":("STRING",{"default":""}), "file":("STRING",{"default":"stash.jsonl"}) }}
+    CATEGORY = "quicknodes"
+    RETURN_TYPES = ()
+    OUTPUT_NODE = True
+    FUNCTION = "func"    
 
-CLAZZES = [LLM]
+    def func(self, text, file):
+        with open(file, 'a+') as f:
+            print(json.dumps({"prompt":text}), file=f)
+        return ()
+    
+class Unstash:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"file":("STRING",{"default":"stash.jsonl"}) }
+    CATEGORY = "quicknodes"
+    RETURN_TYPES = ("STRING",)
+    FUNCTION = "func"   
+
+    def __init__(self):
+        self.index = -1
+        self.list = None
+
+    def func(self, file):
+        if not self.list:
+            self.list = []
+            with open(file, 'r') as f:
+                for line in f.readlines():
+                    self.list += [json.loads(line)['prompt'],]
+        self.index += 1
+        return (self.list[self.index],)
+
+CLAZZES = [LLM, Stash, Unstash]

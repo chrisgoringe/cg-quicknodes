@@ -50,4 +50,4 @@ class OutpaintBlack:
         return (new_image, )
 
     
-CLAZZES = [InvertMaskOptional, MaskToBlack, OutpaintBlack, ]
+CLAZZES = [InvertMaskOptional, MaskToBlack, OutpaintBlack]
