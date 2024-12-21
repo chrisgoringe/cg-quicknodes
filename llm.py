@@ -49,7 +49,7 @@ class Stash:
 class Unstash:
     @classmethod
     def INPUT_TYPES(cls):
-        return {"file":("STRING",{"default":"stash.jsonl"}) }
+        return {"required":{"file":("STRING",{"default":"stash.jsonl"}) }}
     CATEGORY = "quicknodes"
     RETURN_TYPES = ("STRING",)
     FUNCTION = "func"   
