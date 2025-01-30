@@ -39,9 +39,22 @@ class ToInt:
     RETURN_TYPES = ("INT",)
     def func(self, string):
         try:
-            return (int(string),)   
+            return (int(string.strip()),)   
         except:
-            return (0,)   
+            return (0,)
+        
+class ToFloat:
+    FUNCTION = "func"
+    CATEGORY = "quicknodes"
+    @classmethod
+    def INPUT_TYPES(s):
+        return { "required": { "string" : ("STRING", {"forceInput":True}) }, }
+    RETURN_TYPES = ("FLOAT",)
+    def func(self, string):
+        try:
+            return (float(string.strip()),)   
+        except:
+            return (0.0,)   
 
 class CombineStrings:
     FUNCTION = "func"
@@ -70,4 +83,4 @@ class Substitute:
     def func(self, string:str, replace_, with_):
         return (string.replace(replace_, with_),)
     
-CLAZZES = [CombineStrings,Substitute, ToString, ToInt]
+CLAZZES = [CombineStrings,Substitute, ToString, ToInt, ToFloat]
