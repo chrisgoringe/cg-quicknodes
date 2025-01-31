@@ -6,7 +6,7 @@ import hashlib
 from nodes import SaveImage
 
 class SaveFilename(SaveImage):
-    CATEGORY = "quicknodes"
+    CATEGORY = "quicknodes/images"
 
     RETURN_TYPES = ("STRING",)
     RETURN_NAME = ("filename",)
@@ -28,7 +28,7 @@ class LoadImageWithFilename():
         files = [f for f in os.listdir(cls.directory) if os.path.isfile(os.path.join(cls.directory, f))]
         return {"required": {"image": (sorted(files), {"image_upload": True})}, }
 
-    CATEGORY = "quicknodes"
+    CATEGORY = "quicknodes/images"
 
     def func(self, image):
         image_path = os.path.join(self.directory,image)

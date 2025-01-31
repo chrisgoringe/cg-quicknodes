@@ -3,22 +3,22 @@ from server import PromptServer
 import math
 
 class ImageSize:
-    CATEGORY = "quicknodes"
+    CATEGORY = "quicknodes/images"
     @classmethod
     def INPUT_TYPES(s):
        return {"required": { "image": ("IMAGE",), }, "hidden": { "node_id": "UNIQUE_ID" }  }
-    RETURN_TYPES = ()
-    RETURN_NAMES = ()
+    RETURN_TYPES = ("INT","INT")
+    RETURN_NAMES = ("w","h")
     OUTPUT_NODE = True
     FUNCTION = "func"
 
     def func(self, image:torch.Tensor, node_id:int):
         b, h, w, c = image.shape
         PromptServer.instance.send_sync("cg.quicknodes.textmessage", {"id": node_id, "message":f"{w} x {h}"})
-        return ()
+        return (w,h)
     
 class SizePicker:
-    CATEGORY = "quicknodes"
+    CATEGORY = "quicknodes/images"
     @classmethod
     def INPUT_TYPES(s):
        return {"required": { 
@@ -39,7 +39,7 @@ class SizePicker:
     
 
 class ResizeImage:
-    CATEGORY = "quicknodes"
+    CATEGORY = "quicknodes/images"
     @classmethod
     def INPUT_TYPES(s):
         return {"required":  { 
