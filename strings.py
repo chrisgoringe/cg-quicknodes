@@ -39,7 +39,7 @@ class ToInt:
     RETURN_TYPES = ("INT",)
     def func(self, string):
         try:
-            return (int(string.strip()),)   
+            return (round(float(string.strip())),)   
         except:
             return (0,)
         

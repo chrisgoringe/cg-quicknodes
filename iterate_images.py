@@ -1,5 +1,5 @@
 
-from .ui_decorator import ui_signal
+from ui_decorator import ui_signal
 import os, json, random
 from PIL import Image, ImageOps
 import numpy as np
