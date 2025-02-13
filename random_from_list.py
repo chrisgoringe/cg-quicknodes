@@ -58,7 +58,8 @@ class RandomFromList(Base):
 
     def func(self,seed,options):
         random.seed(seed)
-        string = random.choice( to_string_list(options) ) 
+        choices = to_string_list(options)
+        string = random.choice( choices ) if len(choices) else ""
         return parse_string(string)
     
 class AppendRandomFromList:
@@ -80,8 +81,9 @@ class AppendRandomFromList:
 
     def func(self,seed,seed_offset,divider,options,in_string=None):
         random.seed(seed+seed_offset)
-        string = random.choice( to_string_list(options) ) 
-        if in_string: string = in_string + divider + string 
+        choices = to_string_list(options)
+        string = random.choice( choices )  if len(choices) else ""
+        if in_string: string = in_string + ((divider + string) if string else "")
         return (string,)   
     
 CLAZZES = [ListFromList, RandomFromList, RandomFloats, AppendRandomFromList]

@@ -13,14 +13,18 @@ DETAILS = '''Your prompt be written as paragraphs and should include
 the main subject or character description, background and setting details, lighting, color scheme, and atmosphere,
 any specific actions or poses for characters, important objects or elements to include, overall mood or emotion to convey.
 
-Your reply should begin PROMPT:
+Please only write in English.
+
+The prompt should be given in a paragraph starting PROMPT:
 '''
+
 
 formats = {
     "chatml":0,
     "Llama 2":1,
     "Llama 3":2,
     "mistral":3,
+    "Deep Seek":4
 }
 
 DEFAULTS = {     
@@ -39,12 +43,13 @@ DEFAULTS = {
 }
 
 REMOVES = [
-    re.compile('[<\[]+\/?SYS[\]>]+'), 
-    re.compile('[<\[]+\/?INST[\]>]+'), 
-    re.compile('<\|im_\w{3,5}\|>\w{0,9}'), 
-    re.compile('Prompt:'), 
-    re.compile('<\|eot_id\|>.*'),
-    re.compile('PROMPT:?') 
+    #re.compile('[<\[]+\/?SYS[\]>]+'), 
+    #re.compile('[<\[]+\/?INST[\]>]+'), 
+    #re.compile('<\|im_\w{3,5}\|>\w{0,9}'), 
+    re.compile('^.*Prompt:', re.S), 
+    #re.compile('<\|eot_id\|>.*'),
+    re.compile('^.*PROMPT:?', re.S),
+    re.compile('^.*</think>', re.S)
 ]
 
 def format_prompt(format, topic, style) -> list[str]:
@@ -66,7 +71,12 @@ def format_prompt(format, topic, style) -> list[str]:
         [ 
             "<s>[INST]", SYSTEM, "[/INST]</s>",
             "<s>[INST]", INSTRUCTION, f"Topic: {topic}", f"Style: {style}", DETAILS, "[/INST]"
-        ],        
+        ],
+        [
+            "<|begin_of_text|><|start_header_id|>user<|end_header_id|>", SYSTEM, "<|eot_id|>",
+            "<|start_header_id|>user<|end_header_id|>", INSTRUCTION, f"Topic: {topic}", f"Style: {style}", DETAILS, "<|eot_id|>",
+            "<|start_header_id|>assistant<|end_header_id|>"
+        ],     
     ][formats[format]]
 
     return "\n".join(lines)
@@ -78,7 +88,7 @@ def clean_reply(format, reply):
         s = s.strip().strip('\'"')
         return s
     while (t:=clean(reply)) != reply: reply = t
-    return reply
+    return reply.strip()
 
 def magic_cast(x:str):
     if x.lower()=='true': return True
