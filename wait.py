@@ -1,4 +1,5 @@
 import time
+from comfy.model_management import throw_exception_if_processing_interrupted
 
 class WaitABit:
     CATEGORY = "quicknodes"
@@ -9,7 +10,10 @@ class WaitABit:
     RETURN_NAMES = ("image",)
     FUNCTION = "func"
     def func(self,seconds, image):
-        time.sleep(seconds)
+        end = time.monotonic() + seconds
+        while time.monotonic < end:
+            throw_exception_if_processing_interrupted()
+            time.sleep(1)
         return (image,)
     
 CLAZZES = [WaitABit,]
