@@ -5,29 +5,34 @@ class List:
     OUTPUT_IS_LIST = (True,)
     FUNCTION = "func"
 
-    def func(self, start, step, end): 
-        n = start
-        lst = [n,]
-        while (n+step<=end and step>0) or (n+step>=end and step<0):
-            n += step
-            lst.append(n)
+    def func(self, start, step, count=0, end=0):
+        count = count or (1+int((end-start)/step) if step else 1)
+        lst = [ start + i*step for i in range(count) ]
         return (lst,)
     
 class IntList(List):
     @classmethod    
-    def INPUT_TYPES(s): return { "required":  { 
-        "start": ("INT",{"default":0}), 
-        "step" : ("INT",{"default":1}),
-        "end" :  ("INT",{"default":10}),
+    def INPUT_TYPES(s): return { 
+        "required":  { 
+            "start": ("INT",{"default":0, "min":-1e9, "max":1e9}), 
+            "step" : ("INT",{"default":1, "min":-1e9, "max":1e9}),
+        },
+        "optional": {
+            "count" :  ("INT",{"default":0, "min":0, "max":1e9, "toolip":"if non-zero, count is used instead of end"}),
+            "end"   :  ("INT",{"default":10, "min":-1e9, "max":1e9, "toolip":"end is included"}),
         } }
     RETURN_TYPES = ("INT",)
 
 class FloatList(List):
     @classmethod    
-    def INPUT_TYPES(s): return { "required":  { 
-        "start": ("FLOAT",{"default":0,"min":-20000,"max":20000}), 
-        "step" : ("FLOAT",{"default":0.1}),
-        "end" :  ("FLOAT",{"default":1,"min":-20000,"max":20000}),
+    def INPUT_TYPES(s): return { 
+        "required":  { 
+            "start": ("FLOAT",{"default":0,"min":-20000,"max":20000}), 
+            "step" : ("FLOAT",{"default":0.1}),
+        },
+        "optional": {
+            "count" :  ("INT",{"default":0, "min":0, "max":1e9, "toolip":"if non-zero, count is used instead of end"}),    
+            "end"   :  ("FLOAT",{"default":1,"min":-20000,"max":20000}),
         } }
     RETURN_TYPES = ("FLOAT",)
 
