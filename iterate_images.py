@@ -62,7 +62,10 @@ class IterateImages:
         except:
             text = ""
 
-        if delete_images=="yes": os.remove(filepath)
+        if delete_images=="yes": 
+            bindir = os.path.join(os.path.split(filepath)[0], 'z')
+            if not os.path.exists(bindir): os.makedirs(bindir, exist_ok=True)
+            os.rename(filepath, os.path.join(bindir, filename))
 
         return (image, filepath, metadata, text, [("reset","no"),] if reset=="yes" else [], "no" if len(self.files_left) else "autoqueueoff", message)
 
