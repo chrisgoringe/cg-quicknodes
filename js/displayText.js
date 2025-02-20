@@ -21,7 +21,9 @@ app.registerExtension({
             const id = event.detail.id;
             const message = event.detail.message;
             const node = app.graph._nodes_by_id[id];
-            if (node && node.displayMessage) node.displayMessage(message);
+            if (node && node.displayMessage) {
+                if (!node.flags?.collapsed) node.displayMessage(message);
+            }
             else (console.log(`node ${id} couldn't handle a message`));
         }
         api.addEventListener("cg.quicknodes.textmessage", messageHandler);
