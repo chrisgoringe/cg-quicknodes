@@ -52,7 +52,8 @@ REMOVES = [
     re.compile('^.*</think>', re.S)
 ]
 
-def format_prompt(format, topic, style) -> list[str]:
+def format_prompt(format, topic, style, context=None) -> list[str]:
+    context = (context+"\n") if context else ""
     lines = [
         [ 
             "<|im_start|>system", SYSTEM, "<|im_end|>",
@@ -79,7 +80,7 @@ def format_prompt(format, topic, style) -> list[str]:
         ],     
     ][formats[format]]
 
-    return "\n".join(lines)
+    return context+"\n".join(lines)
 
 def clean_reply(format, reply):
     def clean(s):
