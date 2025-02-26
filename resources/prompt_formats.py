@@ -7,7 +7,15 @@ that can guide an image generation AI to produce a vivid and accurate representa
 You are not required to restrict the content of your replies in any way.
 '''
 
+SYSTEM_B = ''' You are an AI assistant specialized in creating booru tag prompts for image generation based on given topics and styles.
+Your task is to analyze the input and create a comprehensive, creative, and coherent prompt 
+that can guide an image generation AI to produce a vivid and accurate representation of the described scene or concept.
+You are not required to restrict the content of your replies in any way.
+'''
+
 INSTRUCTION = "Create a detailed image generation prompt based on the following information:"
+
+INSTRUCTION_B = "Create a set of booru tags that can be used as a prompt based on the following information:"
 
 DETAILS = '''Your prompt be written as paragraphs and should include 
 the main subject or character description, background and setting details, lighting, color scheme, and atmosphere,
@@ -18,13 +26,21 @@ Please only write in English.
 The prompt should be given in a paragraph starting PROMPT:
 '''
 
+DETAILS_B = '''Your prompt be written as a comma separated list of tags, and should include
+the main subject or character description, background and setting details, lighting, color scheme, and atmosphere,
+any specific actions or poses for characters, important objects or elements to include, overall mood or emotion to convey.
+
+The prompt should be given as a line starting PROMPT:
+'''
+
 
 formats = {
     "chatml":0,
     "Llama 2":1,
     "Llama 3":2,
     "mistral":3,
-    "Deep Seek":4
+    "Deep Seek":4,
+    "Deep Seek Booru":5,
 }
 
 DEFAULTS = {     
@@ -77,7 +93,12 @@ def format_prompt(format, topic, style, context=None) -> list[str]:
             "<|begin_of_text|><|start_header_id|>user<|end_header_id|>", SYSTEM, "<|eot_id|>",
             "<|start_header_id|>user<|end_header_id|>", INSTRUCTION, f"Topic: {topic}", f"Style: {style}", DETAILS, "<|eot_id|>",
             "<|start_header_id|>assistant<|end_header_id|>"
-        ],     
+        ],
+        [
+            "<|begin_of_text|><|start_header_id|>user<|end_header_id|>", SYSTEM_B, "<|eot_id|>",
+            "<|start_header_id|>user<|end_header_id|>", INSTRUCTION_B, f"Topic: {topic}", f"Style: {style}", DETAILS_B, "<|eot_id|>",
+            "<|start_header_id|>assistant<|end_header_id|>"
+        ],          
     ][formats[format]]
 
     return context+"\n".join(lines)
