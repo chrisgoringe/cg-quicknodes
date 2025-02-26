@@ -32,7 +32,7 @@ class IterateImages:
     CATEGORY = "quicknodes/images"
 
     def reload_maybe(self, folder, extensions, reset):
-        if not hasattr(self,'files_left') or reset in ["always","yes"]:
+        if not hasattr(self,'files_left') or reset in ["always","yes","random"]:
             extension_list = extensions.split(",")
             def is_image_filename(filename):
                 split = os.path.splitext(filename)
