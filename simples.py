@@ -9,7 +9,7 @@ class Simple:
 class SimpleInt(Simple):
     RETURN_TYPES = ("INT",)
     @classmethod
-    def extras(s): return {"default":0}    
+    def extras(s): return {"default":0, "min":-10000000, "max":10000000}    
 
 class SimpleFloat(Simple):
     RETURN_TYPES = ("FLOAT",)

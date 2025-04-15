@@ -5,7 +5,8 @@ class SimpleMaths:
         if   op=="add":       r = x+y
         elif op=="subtract":  r = x-y
         elif op=="multiply":  r = x*y
-        elif op=="divide":    r = x//y
+        elif op=="int_divide":r = x//y
+        elif op=="divide":    r = x/y
         elif op=="remainder": r = x%y
         return (r,f"{round(r,dp) if dp is not None else r}",)
 
@@ -14,9 +15,9 @@ class SimpleIntegerMaths(SimpleMaths):
     @classmethod    
     def INPUT_TYPES(s):
         return { "required":  { 
-            "x": ("INT", {"default":0}),
-            "y": ("INT", {"default":0}),
-            "op": (["add","subtract","multiply","divide","remainder"],{}),
+            "x": ("INT", {"default":0, "min":-1e9, "max":1e9}),
+            "y": ("INT", {"default":0, "min":-1e9, "max":1e9}),
+            "op": (["add","subtract","multiply","int_divide","remainder"],{}),
             } }
 
 class SimpleFloatMaths(SimpleMaths):
@@ -24,9 +25,9 @@ class SimpleFloatMaths(SimpleMaths):
     @classmethod    
     def INPUT_TYPES(s):
         return { "required":  { 
-            "x": ("FLOAT", {"default":0}),
-            "y": ("FLOAT", {"default":0}),
-            "op": (["add","subtract","multiply","divide","remainder"],{}),
+            "x": ("FLOAT", {"default":0, "min":-1e9, "max":1e9}),
+            "y": ("FLOAT", {"default":0, "min":-1e9, "max":1e9}),
+            "op": (["add","subtract","multiply","divide"],{}),
             "dp": ("INT", {"default" : 2, "tooltip":"Decimal places to round string to"})
             } }
 

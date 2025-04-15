@@ -68,36 +68,37 @@ REMOVES = [
     re.compile('^.*</think>', re.S)
 ]
 
-def format_prompt(format, topic, style, context=None) -> list[str]:
+def format_prompt(format, topic, style, context=None, starter=None) -> str:
     context = (context+"\n") if context else ""
+    starter = "PROMPT: "+starter if starter else ""
     lines = [
         [ 
             "<|im_start|>system", SYSTEM, "<|im_end|>",
             "<|im_start|>user", INSTRUCTION, f"Topic: {topic}", f"Style: {style}", DETAILS, "<|im_end|>",
-            "<|im_start|>assistant" 
+            "<|im_start|>assistant", starter
         ], 
         [ 
             "<<SYS>", SYSTEM, "<</SYS>>",
-            "[INST]", INSTRUCTION, f"Topic: {topic}", f"Style: {style}", DETAILS, "[/INST]"
+            "[INST]", INSTRUCTION, f"Topic: {topic}", f"Style: {style}", DETAILS, "[/INST]", starter
         ],
         [
             "<|begin_of_text|><|start_header_id|>system<|end_header_id|>", SYSTEM, "<|eot_id|>",
             "<|start_header_id|>user<|end_header_id|>", INSTRUCTION, f"Topic: {topic}", f"Style: {style}", DETAILS, "<|eot_id|>",
-            "<|start_header_id|>assistant<|end_header_id|>"
+            "<|start_header_id|>assistant<|end_header_id|>", starter
         ],
         [ 
             "<s>[INST]", SYSTEM, "[/INST]</s>",
-            "<s>[INST]", INSTRUCTION, f"Topic: {topic}", f"Style: {style}", DETAILS, "[/INST]"
+            "<s>[INST]", INSTRUCTION, f"Topic: {topic}", f"Style: {style}", DETAILS, "[/INST]", starter
         ],
         [
             "<|begin_of_text|><|start_header_id|>user<|end_header_id|>", SYSTEM, "<|eot_id|>",
             "<|start_header_id|>user<|end_header_id|>", INSTRUCTION, f"Topic: {topic}", f"Style: {style}", DETAILS, "<|eot_id|>",
-            "<|start_header_id|>assistant<|end_header_id|>"
+            "<|start_header_id|>assistant<|end_header_id|>", starter
         ],
         [
             "<|begin_of_text|><|start_header_id|>user<|end_header_id|>", SYSTEM_B, "<|eot_id|>",
             "<|start_header_id|>user<|end_header_id|>", INSTRUCTION_B, f"Topic: {topic}", f"Style: {style}", DETAILS_B, "<|eot_id|>",
-            "<|start_header_id|>assistant<|end_header_id|>"
+            "<|start_header_id|>assistant<|end_header_id|>", starter
         ],          
     ][formats[format]]
 

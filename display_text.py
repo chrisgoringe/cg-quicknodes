@@ -22,7 +22,7 @@ class DisplayText:
     OUTPUT_NODE = True
 
     def func(self, id, string=None, json_=None):
-        text = string or json.dumps(decode_nested_json(json_), indent=2)
+        text = string if string is not None else json.dumps(decode_nested_json(json_), indent=2)
         PromptServer.instance.send_sync("cg.quicknodes.textmessage", {"id": id, "message":text})
         #print(f"{id}:{text}")
         return ()

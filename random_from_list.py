@@ -13,6 +13,23 @@ def to_string_list(options):
     lines = ( o.split("#")[0].strip() for o in options.split("\n") if o )
     return list( line for line in lines if line )
 
+class RandomInt:
+    RETURN_TYPES = ("INT", "STRING")
+    CATEGORY = "quicknodes/random"
+    FUNCTION = "func"
+    @classmethod    
+    def INPUT_TYPES(s):
+        return { "required":  { 
+            "seed": ("INT", {"default":0, "min":0, "max":1e9}),
+            "_min": ("INT", {"default":1000000, "min": -1e9, "max":1e9}),
+            "_max": ("INT", {"default":9999999, "min": -1e9, "max":1e9})
+        }}
+    
+    def func(self, seed, _min, _max):
+        random.seed(seed)
+        i = random.randint(_min, _max)
+        return (i, str(i))
+
 class RandomFloats:
     RETURN_TYPES = ("FLOAT", "FLOAT", "FLOAT")
     CATEGORY = "quicknodes/random"
@@ -86,4 +103,4 @@ class AppendRandomFromList:
         if in_string: string = in_string + ((divider + string) if string else "")
         return (string,)   
     
-CLAZZES = [ListFromList, RandomFromList, RandomFloats, AppendRandomFromList]
+CLAZZES = [ListFromList, RandomFromList, RandomFloats, AppendRandomFromList, RandomInt]
