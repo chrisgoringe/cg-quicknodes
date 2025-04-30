@@ -51,7 +51,7 @@ class IterateImages:
         if self.files_left==[]: return (None, "", [], "terminate", f"No more files matching {extensions} in {folder}")
         if reset=="random": random.shuffle(self.files_left)
 
-        if resend_last and self.last_was and os.path.exists(os.path.join(folder, self.last_was)):
+        if resend_last=="yes" and self.last_was and os.path.exists(os.path.join(folder, self.last_was)):
             filename = self.last_was
         else:
             filename = self.files_left[0] 
