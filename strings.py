@@ -11,7 +11,9 @@ class ToString:
                 "format_": ("STRING", {"default":"", "tooltip":"Optional python formnat string. Overrides float_dp."}),
                 "int_": ("INT", {"forceInput":True, "tooltip":"Optional. Ignored if float_ provided."}), 
                 "float_": ("FLOAT", {"forceInput":True, "tooltip":"Optional. Takes precedence over int_"}), 
-                "float_dp": ("INT", {"default":2, "tooltip":"If no format string, and using float_, round to this number of decimal places."}) }
+                "float_dp": ("INT", {"default":2, "tooltip":"If no format string, and using float_, round to this number of decimal places."}),
+                "string_": ("STRING", {"default":""}),
+                "default": ("STRING", {"default":""})}
         }
     RETURN_TYPES = ("STRING",)
 
@@ -20,7 +22,7 @@ class ToString:
         if not f.endswith('}'): f = f + '}'
         return f
     
-    def func(self, format_="", int_=None, float_=None, float_dp=2):
+    def func(self, format_="", int_=None, float_=None, float_dp=2, string_="", default=""):
         if float_ is not None:
             if format_:  return (self.wrap_format(format_.strip()).format(float_),)
             if float_dp: return (f"{round(float_, float_dp)}",)
@@ -28,7 +30,8 @@ class ToString:
         elif int_ is not None:       
             if format_:  return (self.wrap_format(format_.strip()).format(int_),)
             else:        return (f"{int_}",)
-        else:            return ("",)
+        elif string_:    return (string_,)
+        else:            return (default,)
   
 class ToInt:
     FUNCTION = "func"

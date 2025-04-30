@@ -35,7 +35,7 @@ class LLM:
             reply = clean_reply(prompt_format, res.json()['results'][0]['text'])
         else:
             raise ServerException(f"{res.url} returned {res.status_code} : {res.reason}")
-        return ((f"{starter}" if starter else "")+reply,topic,)
+        return ((f"{starter} " if starter else "")+reply,topic,)
    
 
 CLAZZES = [LLM,]
