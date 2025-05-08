@@ -1,7 +1,43 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 import { ComfyWidgets } from "../../scripts/widgets.js";
-import { registerUiOutputListener } from "./ui_output_dispatch.js";
+
+function registerUiOutputListener(nodeType, nodeData, message_type, func) {
+	if (nodeData?.ui_output?.includes(message_type) || nodeData?.description?.includes(message_type)) {
+		const onExecuted = nodeType.prototype.onExecuted;
+		nodeType.prototype.onExecuted = function (message) {
+			onExecuted?.apply(this, arguments);
+			if (message[message_type]) {
+				var the_message = message[message_type];
+				var node = undefined;
+				if (typeof the_message[0] === 'string' && the_message[0].startsWith('id=')) {
+					node = this.graph._nodes_by_id[the_message[0].slice(3)];
+					the_message.splice(0,1);
+				} else {
+					node = this;
+				}
+				func.apply(node, [the_message]);
+			}
+		};
+	}
+};
+
+export function display_message_function(message, node) {
+	const text_widget_name = "display_text_widget$$"
+	node = node ?? this
+	var w = node.widgets?.find((w) => w.name === text_widget_name);
+	if (w === undefined) {
+		w = ComfyWidgets["STRING"](node, text_widget_name, ["STRING", { multiline: true }], app).widget;
+		w.inputEl.readOnly = true;
+		w.inputEl.style.opacity = 0.6;
+		w.inputEl.style.fontSize = "12pt";
+	}
+	w.value = message;
+	if (this.title?.includes("+")) {
+		w.inputEl.style.fontSize = "300%"
+	}
+	node.onResize?.(node.size);
+};
 
 function terminate_function(message) { 
 	if (message[0]==="terminate") { 
@@ -36,20 +72,7 @@ function modify_other_function (message) {
 	});
 };
 
-function display_text_function(message) {
-	var text = message[0];
-	var w = this.widgets?.find((w) => w.name === "display_text_widget");
-	if (w === undefined) {
-		w = ComfyWidgets["STRING"](this, "display_text_widget", ["STRING", { multiline: true }], app).widget;
-		w.inputEl.readOnly = true;
-		w.inputEl.style.opacity = 0.6;
-		w.inputEl.style.fontSize = "9pt";
-	}
-	w.value = text;
-	this.onResize?.(this.size);
-};
-
-function set_title_color_function(message) {
+function title_color_function(message) {
 	var col = message[0];
 	if (col==='reset') {
 		if (this.color_was_originally==='not-set') { col = undefined; } 
@@ -65,14 +88,14 @@ function set_title_color_function(message) {
 };
 
 app.registerExtension({
-	name: "cg.custom.core.DisplayText",
-	version: 3,
+	name: "cg.ui_output_actions",
+	version: 4,
 	async beforeRegisterNodeDef(nodeType, nodeData, app) {
         registerUiOutputListener(nodeType, nodeData, 'terminate', terminate_function);
-		registerUiOutputListener(nodeType, nodeData, 'display_text', display_text_function);
+		registerUiOutputListener(nodeType, nodeData, 'display_text', display_message_function);
         registerUiOutputListener(nodeType, nodeData, 'modify_self', modify_self_function);
         registerUiOutputListener(nodeType, nodeData, 'modify_other', modify_other_function);
-		registerUiOutputListener(nodeType, nodeData, 'set_title_color', set_title_color_function);
+		registerUiOutputListener(nodeType, nodeData, 'set_title_color', title_color_function);
 	},
 });
 

@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 import torch
 from typing import Optional
 from math import sin, pi

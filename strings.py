@@ -1,5 +1,5 @@
 from datetime import date
-import re, os
+import re, os, json
 
 class ToString:
     FUNCTION = "func"
@@ -130,6 +130,26 @@ class Common:
             return (getattr(os.path, action)([string1,string2]),)
         except ValueError:
             return ("",)
+        
+def decode_nested_json(json_):
+    if not json_: return {}
+    def ld(s):
+        try: return json.loads(str(s))
+        except json.decoder.JSONDecodeError: return s
+        except: pass 
+    return { k:ld(json_[k]) for k in json_ } if isinstance(json_,dict) else json_
+        
+class ExtractFromJson:
+    CATEGORY = "quicknodes/strings"
+    @classmethod    
+    def INPUT_TYPES(s):
+        return {"required" : { "json_" : ("JSON", {}), "key" : ("STRING", {"default":"prompt"})}}
+    RETURN_TYPES = ("STRING",)
+    FUNCTION = "func"
+
+    def func(self, json_, key):
+        if isinstance(json_,str): json_ = json.loads(json_)
+        return (decode_nested_json(json_).get(key,""),)
 
     
-CLAZZES = [CombineStrings,Substitute, ToString, ToInt, ToFloat, Split, Common]
+CLAZZES = [CombineStrings,Substitute, ToString, ToInt, ToFloat, Split, Common, ExtractFromJson]
