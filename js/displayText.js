@@ -3,9 +3,9 @@ import { api } from "../../../scripts/api.js";
 import { ComfyWidgets } from "../../../scripts/widgets.js";
 
 function displayMessage(message) {
-	var w = this.widgets?.find((w) => w.name === "display_text_widget");
+	var w = this.widgets?.find((w) => w.name === "display_text_widget$$");
 	if (w === undefined) {
-		w = ComfyWidgets["STRING"](this, "display_text_widget", ["STRING", { multiline: true }], app).widget;
+		w = ComfyWidgets["STRING"](this, "display_text_widget$$", ["STRING", { multiline: true }], app).widget;
 		w.inputEl.readOnly = true;
 		w.inputEl.style.opacity = 0.6;
 		w.inputEl.style.fontSize = "12pt";
