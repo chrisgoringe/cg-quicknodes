@@ -1,6 +1,7 @@
 import requests, json
 from resources.prompt_formats import format_prompt, clean_reply, get_payload, formats
 
+
 class ServerException(Exception): pass
 
 class LLM:
@@ -36,6 +37,36 @@ class LLM:
         else:
             raise ServerException(f"{res.url} returned {res.status_code} : {res.reason}")
         return ((f"{starter} " if starter else "")+reply,topic,)
-   
-
+    
 CLAZZES = [LLM,]
+   
+try:
+    from resources.creative import Creator
+    class LLMRandom:
+        @classmethod
+        def INPUT_TYPES(cls):
+            return {"required": 
+                    {
+                        "opener": ("STRING",{"default":"", "multiline":True}),
+                        "server": ("STRING", {"default":".../api/v1/generate"}),
+                        "settings": ("STRING",{"default":"", "multiline":True, "tooltip":"Comma separated key=value pairs"}),
+                        "seed": ("INT", {"default":0, "min":0, "max":999999}),
+                        "dataset": ("STRING",{"default":"ChrisGoringe/flux_prompts"}),
+                    }}
+
+        CATEGORY = "quicknodes"
+        RETURN_TYPES = ("STRING",)
+        RETURN_NAMES = ("prompt",)
+        FUNCTION = "func"
+        
+        def func(self, opener, server, settings, seed, dataset):
+            creator = Creator.get_creator(server, dataset)
+            settings_list = [s.strip() for s in settings.split(',') if s.strip() and '=' in s]
+            prompt  = creator.get_new_prompt(opener, seed, settings_list)
+            return (prompt,)
+
+    CLAZZES.append(LLMRandom)
+
+except Exception as e:
+    print(e)
+    
