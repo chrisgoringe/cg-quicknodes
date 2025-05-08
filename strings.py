@@ -1,8 +1,9 @@
 from datetime import date
+import re, os
 
 class ToString:
     FUNCTION = "func"
-    CATEGORY = "quicknodes"
+    CATEGORY = "quicknodes/strings"
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -35,7 +36,7 @@ class ToString:
   
 class ToInt:
     FUNCTION = "func"
-    CATEGORY = "quicknodes"
+    CATEGORY = "quicknodes/strings"
     @classmethod
     def INPUT_TYPES(s):
         return { "required": { "string" : ("STRING", {"forceInput":True}) }, }
@@ -48,7 +49,7 @@ class ToInt:
         
 class ToFloat:
     FUNCTION = "func"
-    CATEGORY = "quicknodes"
+    CATEGORY = "quicknodes/strings"
     @classmethod
     def INPUT_TYPES(s):
         return { "required": { "string" : ("STRING", {"forceInput":True}) }, }
@@ -61,7 +62,7 @@ class ToFloat:
 
 class CombineStrings:
     FUNCTION = "func"
-    CATEGORY = "quicknodes"
+    CATEGORY = "quicknodes/strings"
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -76,14 +77,59 @@ class CombineStrings:
     
 class Substitute:
     FUNCTION = "func"
-    CATEGORY = "quicknodes"
+    CATEGORY = "quicknodes/strings"
     @classmethod
     def INPUT_TYPES(s):
         return {
-            "required": {"string": ("STRING", {"default":"" }), "replace_": ("STRING", {"default":"" }), "with_": ("STRING", {"default":"" })}
+            "required": {
+                "string": ("STRING", {"default":"" }), 
+                "replace_": ("STRING", {"default":"" }), 
+                "with_": ("STRING", {"default":"" }),
+                "re_": ("BOOLEAN", {"default":False}),
+            }
         }
     RETURN_TYPES = ("STRING",)
-    def func(self, string:str, replace_, with_):
-        return (string.replace(replace_, with_),)
+    def func(self, string:str, replace_, with_, re_=False):
+        if re_:
+            return (re.sub(replace_, with_, string),)
+        else:
+            return (string.replace(replace_, with_),)
+        
+class Split:
+    FUNCTION = "func"
+    CATEGORY = "quicknodes/strings"
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "string": ("STRING", {"default":"" }), 
+                "action": (["split","splitext",], {}),
+            }
+        }
+    RETURN_TYPES = ("STRING","STRING",)
     
-CLAZZES = [CombineStrings,Substitute, ToString, ToInt, ToFloat]
+    def func(self, string, action):
+        return getattr(os.path, action)(string)
+    
+class Common:
+    FUNCTION = "func"
+    CATEGORY = "quicknodes/strings"
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "string1": ("STRING", {"default":"" }), 
+                "string2": ("STRING", {"default":"" }), 
+                "action": (["commonpath","commonprefix",], {}),
+            }
+        }
+    RETURN_TYPES = ("STRING",)
+    
+    def func(self, string1, string2, action):
+        try:
+            return (getattr(os.path, action)([string1,string2]),)
+        except ValueError:
+            return ("",)
+
+    
+CLAZZES = [CombineStrings,Substitute, ToString, ToInt, ToFloat, Split, Common]
