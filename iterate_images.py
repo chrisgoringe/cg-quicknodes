@@ -4,6 +4,7 @@ import os, json, random
 from PIL import Image, ImageOps
 import numpy as np
 import torch
+from comfy.model_management import InterruptProcessingException
 
 def load_image(filepath:str) -> torch.Tensor:
         i = Image.open(filepath)
@@ -30,8 +31,8 @@ class IterateImages:
         "resend_last": (["no","yes"], {}),
         }}
 
-    RETURN_TYPES = ("IMAGE","STRING","STRING","STRING",)
-    RETURN_NAMES = ("image","filepath","metadata",".txt")
+    RETURN_TYPES = ("IMAGE","STRING","STRING","STRING","INT",)
+    RETURN_NAMES = ("image","filepath","metadata",".txt","left",)
     CATEGORY = "quicknodes/images"
 
     def reload_maybe(self, folder, extensions, reset):
@@ -45,16 +46,24 @@ class IterateImages:
     @classmethod
     def IS_CHANGED(self, **kwargs):
         return float("NaN")
+    
+    def newest(self, folder):
+        lst = [ (os.path.getmtime(os.path.join(folder, f)), f) for f in self.files_left ] 
+        lst.sort( key=lambda t:t[0], reverse=True )
+        return lst[0][1]
         
     def func(self, folder, extensions:str, reset, delete_images, resend_last):
         self.reload_maybe(folder, extensions, reset)
-        if self.files_left==[]: return (None, "", [], "terminate", f"No more files matching {extensions} in {folder}")
+        if self.files_left==[]: raise InterruptProcessingException()
         if reset=="random": random.shuffle(self.files_left)
 
-        if resend_last=="yes" and self.last_was and os.path.exists(os.path.join(folder, self.last_was)):
-            filename = self.last_was
-        else:
-            filename = self.files_left[0] 
+        filename = self.files_left[0]
+        if resend_last=="yes":
+            if self.last_was and os.path.exists(os.path.join(folder, self.last_was)):
+                filename = self.last_was
+            else:
+                filename = self.newest(folder)
+
         self.last_was = filename
         self.files_left = [f for f in self.files_left if f!=filename]
 
@@ -76,6 +85,6 @@ class IterateImages:
             while os.path.exists(outfile := os.path.join(bindir, filename)): filename = f"{random.randint(0,9)}{filename}"
             os.rename(filepath, outfile)
 
-        return (image, filepath, metadata, text, [("reset","no"),] if reset=="yes" else [], "no" if len(self.files_left) else "autoqueueoff", message)
+        return (image, filepath, metadata, text, len(self.files_left), [("reset","no"),] if reset=="yes" else [], "no" if len(self.files_left) else "autoqueueoff", message)
 
 CLAZZES = [IterateImages,]
