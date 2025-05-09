@@ -1,21 +1,43 @@
 import torch
-from server import PromptServer
 import math
+from ui_decorator import ui_signal
 
+@ui_signal('display_text')
+class ImageDifference:
+    CATEGORY = "quicknodes/images"
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": { 
+           "image1": ("IMAGE",), 
+           "image2": ("IMAGE",), 
+           "multiplier": ("FLOAT", {"default":1.0, "min":0}),
+        }  }
+    RETURN_TYPES = ("IMAGE", "FLOAT")
+    RETURN_NAMES = ("difference", "mse")
+    FUNCTION = "func"
+
+    def func(self, image1:torch.Tensor, image2:torch.Tensor, multiplier:float):
+        b1, h1, w1, _ = image1.shape
+        b2, h2, w2, _ = image2.shape
+        if (h1!=h2 or w1!=w2 or b1!=1 or b2!=1):
+            return (image1, 0.0, "need two single images of same size")
+        d = torch.abs(image1-image2) * multiplier
+        mse = float(torch.nn.functional.mse_loss(image1, image2))
+        return (d, mse, f"{mse:>10.8f}")   
+
+@ui_signal('display_text')
 class ImageSize:
     CATEGORY = "quicknodes/images"
     @classmethod
     def INPUT_TYPES(s):
-       return {"required": { "image": ("IMAGE",), }, "hidden": { "node_id": "UNIQUE_ID" }  }
+        return {"required": { "image": ("IMAGE",), } }
     RETURN_TYPES = ("INT","INT")
     RETURN_NAMES = ("w","h")
-    OUTPUT_NODE = True
     FUNCTION = "func"
 
-    def func(self, image:torch.Tensor, node_id:int):
+    def func(self, image:torch.Tensor):
         b, h, w, c = image.shape
-        PromptServer.instance.send_sync("cg.quicknodes.textmessage", {"id": node_id, "message":f"{w} x {h}"})
-        return (w,h)
+        return (w,h,f"{w} x {h}")
     
 class SizePicker:
     CATEGORY = "quicknodes/images"
@@ -99,4 +121,4 @@ class ResizeImage:
                 self.resize(image_to_match if image_to_match is not None else image, height, width),
                 width, height, f"{width}x{height}") 
 
-CLAZZES = [ ImageSize, ResizeImage, SizePicker]
+CLAZZES = [ ImageSize, ResizeImage, SizePicker, ImageDifference]

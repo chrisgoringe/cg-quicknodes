@@ -14,6 +14,13 @@ def ui_signal(*args):
     """
     Return a decorator for Node classes.
     @param one or more strings or list of strings
+    'terminate', 'display_text', 'modify_self', 'modify_other', 'set_title_color'
+
+    'terminate': str : 'terminate', 'autoqueueoff'
+    'display_text': str
+    'modify_self': list[widget_name, value]
+    'modify_other': list[node_id, widget_name, value]
+    'set_title_color': str : 'reset' or colorcode
 
     The decorator performs the following:
     The class has OUTPUT_NODE set to True.
