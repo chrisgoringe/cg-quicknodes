@@ -52,18 +52,19 @@ try:
                         "settings": ("STRING",{"default":"", "multiline":True, "tooltip":"Comma separated key=value pairs"}),
                         "seed": ("INT", {"default":0, "min":0, "max":999999}),
                         "dataset": ("STRING",{"default":"ChrisGoringe/flux_prompts"}),
+                        "weighting": ("FLOAT", {"default":1.0, "min":0.1, "max":10.0, "tooltip":"Values greater than 1.0 will prefer previously successful prompt contexts"}),
                     }}
 
         CATEGORY = "quicknodes"
-        RETURN_TYPES = ("STRING",)
-        RETURN_NAMES = ("prompt",)
+        RETURN_TYPES = ("STRING","STRING",)
+        RETURN_NAMES = ("prompt","info",)
         FUNCTION = "func"
         
-        def func(self, opener, server, settings, seed, dataset):
-            creator = Creator.get_creator(server, dataset)
+        def func(self, opener, server, settings, seed, dataset, weighting=1.0):
+            creator = Creator.get_creator(server, dataset.strip())
             settings_list = [s.strip() for s in settings.split(',') if s.strip() and '=' in s]
-            prompt  = creator.get_new_prompt(opener, seed, settings_list)
-            return (prompt,)
+            prompt, info  = creator.get_new_prompt(opener=opener, seed=seed, settings_list=settings_list, use_n=10, weighted=weighting)
+            return (prompt,info,)
 
     CLAZZES.append(LLMRandom)
 
