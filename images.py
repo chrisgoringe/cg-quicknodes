@@ -39,6 +39,21 @@ class ImageSize:
         b, h, w, c = image.shape
         return (w,h,f"{w} x {h}")
     
+class CalculateRescale:
+    CATEGORY = "quicknodes/images"
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": { 
+            "w": ("INT",{"default":1024, "min":1, "max":10000}), 
+            "h": ("INT",{"default":1024, "min":1, "max":10000}),
+            "guide": ("INT",{"default":1024, "min":1, "max":10000, "tooltip":"Desired image square dimension"}),
+        } }    
+    RETURN_TYPES = ("FLOAT",)
+    FUNCTION = "func"
+
+    def func(self, w:int, h:int, guide:int):
+        return (math.sqrt(guide*guide/(w*h)),)
+    
 class SizePicker:
     CATEGORY = "quicknodes/images"
     @classmethod
@@ -121,4 +136,4 @@ class ResizeImage:
                 self.resize(image_to_match if image_to_match is not None else image, height, width),
                 width, height, f"{width}x{height}") 
 
-CLAZZES = [ ImageSize, ResizeImage, SizePicker, ImageDifference]
+CLAZZES = [ ImageSize, ResizeImage, SizePicker, ImageDifference, CalculateRescale]
