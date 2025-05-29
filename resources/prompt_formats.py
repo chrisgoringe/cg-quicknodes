@@ -121,6 +121,9 @@ def magic_cast(x:str):
     try: return float(x)
     except: return x
 
+def parse_settings_list(settings_list:list[str]) -> dict[str,int|float|str|bool]:
+    return { s.split('=')[0].strip():magic_cast(s.split('=')[1].strip()) for s in settings_list }
+
 def get_payload(message, sampler_seed:Optional[int], settings:list[str]=[]):
     r = DEFAULTS.copy()
     r["prompt"] = message

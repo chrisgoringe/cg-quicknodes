@@ -62,7 +62,7 @@ try:
         FUNCTION = "func"
         
         def func(self, opener, server, settings, seed, dataset, weighting=1.0, context_count=10):
-            creator = Creator.get_creator(server, dataset.strip())
+            creator = Creator.instance(server, dataset.strip())
             settings_list = [s.strip() for s in settings.split(',') if s.strip() and '=' in s]
             prompt, info  = creator.get_new_prompt(opener=opener, seed=seed, settings_list=settings_list, use_n=context_count, weighted=weighting)
             return (prompt,info,)

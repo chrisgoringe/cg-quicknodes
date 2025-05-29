@@ -1,7 +1,8 @@
-import datasets, random, requests, time
-from .prompt_formats import magic_cast
+import datasets, requests, time, os
+from .prompt_formats import parse_settings_list
 from math import pow
 from typing import Optional
+import numpy as np
 
 END = "<|im_end|>"
 START = "<|im_start|>"
@@ -25,52 +26,54 @@ DEFAULTS = {
 }
 
 class Creator:
-    instance = None
-    last_created = None
-    stale_time = 300
-    def __init__(self, server, dataset_id):
-        self.server = server
-        self.dataset_id = dataset_id
-        try:
-            self.ds = datasets.load_dataset(dataset_id)['train']
-        except:
-            self.ds = datasets.load_from_disk(dataset_id)
-        prompts = self.ds['prompt']
-        self.count = len(prompts)
-        self.data  = {
-            'prompt':prompts,  
-            'idx'   :self.ds['idx'] if 'idx' in self.ds.column_names else [0]*self.count, 
-            'score' :self.ds['score'] if 'score' in self.ds.column_names else [0]*self.count
-        }
+    _instance = None
 
+    def __init__(self, server, dataset_id):
+        self.dataset_id = dataset_id
+        self.server     = server
+        ds = datasets.load_from_disk(dataset_id) if os.path.exists(dataset_id) else datasets.load_dataset(dataset_id)['train']
+        
+        self.count = len(ds)
+        self.data  = {
+            'prompt':ds['prompt'],  
+            'idx'   :ds['idx']   if 'idx'   in ds.column_names else [0]*self.count, 
+            'score' :ds['score'] if 'score' in ds.column_names else [0]*self.count
+        }
+        self.created = time.monotonic()
+
+    @property
+    def age(self): return time.monotonic() - self.created
 
     @classmethod
-    def get_creator(cls, server, dataset_id):
+    def instance(cls, server:str, dataset_id:str, reload_after:int=300):
         if (
-            not cls.instance or 
-            cls.instance.server!=server or 
-            cls.instance.dataset_id!=dataset_id or 
-            (time.monotonic()-cls.last_created)>cls.stale_time
+            not cls._instance                       or 
+            cls._instance.server     != server      or 
+            cls._instance.dataset_id != dataset_id  or 
+            cls._instance.age > reload_after
         ):
-            cls.instance = cls(server, dataset_id) 
-            cls.last_created = time.monotonic()
-        return cls.instance
+            cls._instance = cls(server, dataset_id) 
+        return cls._instance
  
     def get_some_prompts(self, n, seed, weighted:Optional[float]=None) -> tuple[list[str], list[int]]:
-        seed = seed or random.randint(1,1e8)
-        random.seed(seed)
-        weights = [ pow(weighted, x) for x in self.data['score'] ] if weighted else None
-        chosen = random.choices(population = list(range(0,self.count)), weights=weights, k=n)
+        assert n <= self.count, f"Requested {n} prompts but only {self.count} available"
+        rng = np.random.default_rng(seed)
+        p = [ pow(weighted, x) for x in self.data['score'] ] if weighted else [1.0] * self.count
+        p = p / np.sum(p, dtype=float)
+        chosen = rng.choice(self.count, size=n, replace=False, p=p)
 
         return (list(self.data['prompt'][x] for x in chosen), 
                 list(self.data['idx'][x] for x in chosen))
 
     def get_new_prompt(self, opener:str, seed:int, settings_list:list[str], use_n=10, weighted=1.0):
-        ps, idxes = self.get_some_prompts(use_n, seed, weighted)
-        old = START + (END+START).join(ps) + END + START + opener
-        payload = DEFAULTS | {"prompt":old} | { s.split('=')[0].strip():magic_cast(s.split('=')[1].strip()) for s in settings_list }
-        res = requests.post(self.server, json=payload, verify=False)
-        return (" ".join((opener, res.json()['results'][0]['text'].strip()))).strip() , ",".join([str(idx) for idx in idxes])
-    
-    def changed(self, server, dataset_id):
-        return (server!=self.server or dataset_id!=self.dataset_id)
+        opener  = opener.strip()
+        ps, ns  = self.get_some_prompts(use_n, seed, weighted)
+        prompt  = START + (END+START).join(ps) + END + START + opener
+        idx_str = ",".join([str(idx) for idx in ns])
+
+        payload = DEFAULTS | {"prompt":prompt} | parse_settings_list(settings_list)
+        response = requests.post(self.server, json=payload, verify=False)
+        if response.status_code != 200: raise Exception(f"Server {self.server} returned {response.status_code}: {response.reason}")
+
+        new_prompt:str = opener + " " + response.json()['results'][0]['text'].strip()
+        return (new_prompt, idx_str)
