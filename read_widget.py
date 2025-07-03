@@ -3,7 +3,7 @@ class ReadWidget:
     @classmethod    
     def INPUT_TYPES(s):
         return { "required":  { 
-                    "node": ("INT", {"default":0}),
+                    "node": ("INT", {"default":0, "max":65536}),
                     "widget": ("STRING", {"default":""}), 
                     "if_absent":("STRING",{"default":"not found"})
                 },
