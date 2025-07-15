@@ -59,7 +59,7 @@ class SizePicker:
     @classmethod
     def INPUT_TYPES(s):
        return {"required": { 
-           "size": (['1024x1024', '1152x896', '1216x832', '1344x768', '1536x640', '1600x900', ],), 
+           "size": (['1024x1024 (1:1)', '1152x896 (1.286:1)', '1216x832 (1.462:1)', '1344x768 (1.75:1)', '1536x640 (2.4:1)', '1280x720 (16:9)', "1920x1080 (16:9)"],), 
            "orientation": (["landscape", "portrait"],)
            }  }
     
@@ -68,6 +68,7 @@ class SizePicker:
     FUNCTION = "func"
 
     def func(self, size, orientation):
+        size = size.split(' ')[0]
         wh = tuple(int(x) for x in size.split("x"))
         if (orientation=="landscape"):
             return wh

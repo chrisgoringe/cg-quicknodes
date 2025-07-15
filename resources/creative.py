@@ -1,4 +1,4 @@
-import datasets, requests, time, os
+import datasets, requests, time, os, random
 from .prompt_formats import parse_settings_list
 from math import pow
 from typing import Optional
@@ -28,17 +28,20 @@ DEFAULTS = {
 class Creator:
     _instance = None
 
-    def __init__(self, server, dataset_id):
-        self.dataset_id = dataset_id
+    def __init__(self, server, dataset_id:str, is_context=False):
+        self.dataset_id = dataset_id             if not is_context else None
+        self.provided   = dataset_id.split("|")  if is_context     else None
         self.server     = server
-        ds = datasets.load_from_disk(dataset_id) if os.path.exists(dataset_id) else datasets.load_dataset(dataset_id)['train']
-        
-        self.count = len(ds)
-        self.data  = {
-            'prompt':ds['prompt'],  
-            'idx'   :ds['idx']   if 'idx'   in ds.column_names else [0]*self.count, 
-            'score' :ds['score'] if 'score' in ds.column_names else [0]*self.count
-        }
+        self.is_context = is_context
+        if not is_context:
+            ds = datasets.load_from_disk(dataset_id) if os.path.exists(dataset_id) else datasets.load_dataset(dataset_id)['train']
+            
+            self.count = len(ds)
+            self.data  = {
+                'prompt':ds['prompt'],  
+                'idx'   :ds['idx']   if 'idx'   in ds.column_names else [0]*self.count, 
+                'score' :ds['score'] if 'score' in ds.column_names else [0]*self.count
+            }
         self.created = time.monotonic()
 
     @property
@@ -50,24 +53,37 @@ class Creator:
             not cls._instance                       or 
             cls._instance.server     != server      or 
             cls._instance.dataset_id != dataset_id  or 
+            cls._instance.is_context                or
             cls._instance.age > reload_after
         ):
             cls._instance = cls(server, dataset_id) 
         return cls._instance
+    
+    @classmethod
+    def context_instance(cls, server:str, context):
+        cls._instance = cls(server, context, True)
+        return cls._instance
  
     def get_some_prompts(self, n, seed, weighted:Optional[float]=None) -> tuple[list[str], list[int]]:
+        if self.provided: 
+            random.shuffle(self.provided)
+            return (self.provided, [])
         assert n <= self.count, f"Requested {n} prompts but only {self.count} available"
         rng = np.random.default_rng(seed)
         p = [ pow(weighted, x) for x in self.data['score'] ] if weighted else [1.0] * self.count
         p = p / np.sum(p, dtype=float)
         chosen = rng.choice(self.count, size=n, replace=False, p=p)
+        chosen = list(chosen[-x] for x in range(n))  # reverse order so first chosen is last in prompt (most recent in context)
 
         return (list(self.data['prompt'][x] for x in chosen), 
-                list(self.data['idx'][x] for x in chosen))
+                list(self.data['idx'][x]    for x in chosen))
 
     def get_new_prompt(self, opener:str, seed:int, settings_list:list[str], use_n=10, weighted=1.0):
         opener  = opener.strip()
-        ps, ns  = self.get_some_prompts(use_n, seed, weighted)
+        if self.is_context:
+            ps, ns = self.provided, []
+        else:
+            ps, ns  = self.get_some_prompts(use_n, seed, weighted)
         prompt  = START + (END+START).join(ps) + END + START + opener
         idx_str = ",".join([str(idx) for idx in ns])
 
