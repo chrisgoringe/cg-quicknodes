@@ -1,5 +1,7 @@
-import requests, random
+import requests, random, os, json, time
 from resources.prompt_formats import format_prompt, clean_reply, get_payload, formats
+from comfy.model_management import InterruptProcessingException
+from ui_decorator import ui_signal
 
 class ServerException(Exception): pass
 
@@ -50,9 +52,6 @@ try:
                         "server": ("STRING", {"default":".../api/v1/generate"}),
                         "settings": ("STRING",{"default":"", "multiline":True, "tooltip":"Comma separated key=value pairs"}),
                         "seed": ("INT", {"default":0, "min":0, "max":999999}),
-                        "dataset": ("STRING",{"default":"ChrisGoringe/flux_prompts"}),
-                        "weighting": ("FLOAT", {"default":1.0, "min":0.1, "max":10.0, "tooltip":"Values greater than 1.0 will prefer previously successful prompt contexts"}),
-                        "context_count": ("INT", {"default":10, "min":1, "max":100, "tooltip":"Number of old prompts to use to create the context"}),
                     },
                     "optional": {"context":("STRING", {"default":"", "tooltip":"List of context prompts joined on '|'"})}
                     }
@@ -62,14 +61,76 @@ try:
         RETURN_NAMES = ("prompt","info",)
         FUNCTION = "func"
         
-        def func(self, opener, server, settings, seed, dataset, weighting=1.0, context_count=10, context = None):
-            if not context:
-                creator = Creator.instance(server, dataset.strip())
-            else:
-                creator = Creator.context_instance(server, context)
+        def func(self, opener:str, server:str, settings:str, seed:int, context:str="", **kwargs):
+            creator = Creator.context_instance(server, context)
             settings_list = [s.strip() for s in settings.split(',') if s.strip() and '=' in s]
-            prompt, info  = creator.get_new_prompt(opener=opener, seed=seed, settings_list=settings_list, use_n=context_count, weighted=weighting)
+            prompt, info  = creator.get_new_prompt(opener=opener, seed=seed, settings_list=settings_list)
             return (prompt,info,)
+        
+    def count(folder, ext=None):
+        return len([f for f in os.listdir(folder) if (ext is None or os.path.splitext(f)[1]==ext)])
+    
+    @ui_signal(['display_text'])
+    class PromptDump:
+        @classmethod
+        def INPUT_TYPES(cls):
+            return {
+                "required": {
+                    "prompt": ("STRING",{"default":""}),
+                    "folder": ("STRING",{"default":"promptdump"}),
+                    "maximum": ("INT",{"default":5, "tooltip":"Skip if there are already this many or more in the folder"}),
+                    "sleeponskip": ("INT",{"default":1, "tooltip":"If skipping, sleep for this number of seconds"}),
+                },
+                "optional": {
+                    "info": ("STRING", {"default":""}),
+                }
+            }
+
+        CATEGORY = "quicknodes/utils"
+        RETURN_TYPES = ("INT",)
+        RETURN_NAMES = ("count",)
+        OUTPUT_NODE = True
+        FUNCTION = "func"
+
+        def func(self, prompt, folder, info=None, maximum=5, sleeponskip=1):
+            if count(folder, ".json")<maximum:
+                filename = os.path.join(folder, f"{random.randint(100000,999999)}.json")
+                payload = {"prompt":prompt}
+                if info: payload['info']=info
+                with open(filename, 'w') as fh: json.dump(payload, fh)
+            else:
+                time.sleep(sleeponskip)
+            n = count(folder, ".json")
+            return (n, f"{n} in folder")
+    
+    @ui_signal(['display_text'])
+    class PromptUndump:
+        @classmethod
+        def INPUT_TYPES(cls):
+            return {"required": 
+                        {
+                            "folder": ("STRING",{"default":"promptdump"}),
+                            "delete": ("BOOLEAN",{"default":True}),
+                        }
+                    }
+
+        CATEGORY = "quicknodes/utils"
+        RETURN_TYPES = ("STRING","STRING","INT")
+        RETURN_NAMES = ("prompt","info","left")
+        FUNCTION = "func"
+
+        @classmethod
+        def IS_CHANGED(s, images):
+            return float("NaN")
+        
+        def func(self, folder, delete):
+            filenames = [os.path.join(folder,f) for f in os.listdir(folder) if os.path.splitext(f)[1]==".json"]
+            if not filenames: raise InterruptProcessingException()
+            filename = random.choice(filenames)
+            with open(filename, 'r') as fh: data = json.load(fh)
+            if delete: os.remove(filename)
+            n = count(folder, ".json")
+            return ( data['prompt'], data['info'], n, f"{n} left" )        
 
     class PickFromDataset:
         @classmethod
@@ -84,38 +145,14 @@ try:
 
         CATEGORY = "quicknodes/datasets"
         RETURN_TYPES = ("STRING","STRING","INT","STRING")
-        RETURN_NAMES = ("prompts","joined","infos","info")
+        RETURN_NAMES = ("prompts","context","infos","info")
         OUTPUT_IS_LIST = (True,False,True,False)
         FUNCTION = "func"
         
         def func(self, seed:int, dataset:str, weighting:float, count:int, **kwargs):
             creator = Creator.instance(None, dataset.strip())
             prompts, infos  = creator.get_some_prompts(n=count, seed=seed, weighted=weighting)
-            return (prompts,"|".join(prompts),infos,",".join([str(idx) for idx in infos]))
-        
-    class Interleave:
-        @classmethod
-        def INPUT_TYPES(cls):
-            return {"required": 
-                    {
-                        "stringlist1": ("STRING", {"default":""}),
-                        "stringlist2": ("STRING", {"default":""}),
-                    }}
-
-        CATEGORY = "quicknodes/datasets"
-        RETURN_TYPES = ("STRING",)
-        RETURN_NAMES = ("prompts",)
-        INPUT_IS_LIST = True
-        OUTPUT_IS_LIST = (True,)
-        FUNCTION = "func"
-        
-        def func(self, stringlist1, stringlist2):
-            outlist = []
-            for i in range(min(len(stringlist1), len(stringlist2))):
-                outlist.append(stringlist1[i])
-                outlist.append(stringlist2[i])
-
-            return (outlist,)     
+            return (prompts,"|".join(prompts),infos,",".join([str(idx) for idx in infos]))  
 
     class Jumble:
         @classmethod
@@ -135,7 +172,7 @@ try:
 
         CATEGORY = "quicknodes/datasets"
         RETURN_TYPES = ("STRING","STRING",)
-        RETURN_NAMES = ("prompts","joined",)
+        RETURN_NAMES = ("prompts","context",)
         INPUT_IS_LIST = True
         OUTPUT_IS_LIST = (True,False)
         FUNCTION = "func"
@@ -149,7 +186,7 @@ try:
 
             return ( outlist, joiner[0].join(outlist), )               
         
-    CLAZZES.extend([LLMRandom,Interleave, Jumble, PickFromDataset])
+    CLAZZES.extend([LLMRandom, Jumble, PickFromDataset, PromptDump, PromptUndump])
 
 except Exception as e:
     print(e)

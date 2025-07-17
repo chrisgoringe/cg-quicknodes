@@ -30,7 +30,7 @@ class Creator:
 
     def __init__(self, server, dataset_id:str, is_context=False):
         self.dataset_id = dataset_id             if not is_context else None
-        self.provided   = dataset_id.split("|")  if is_context     else None
+        self.context    = dataset_id.split("|")  if is_context     else None
         self.server     = server
         self.is_context = is_context
         if not is_context:
@@ -65,9 +65,6 @@ class Creator:
         return cls._instance
  
     def get_some_prompts(self, n, seed, weighted:Optional[float]=None) -> tuple[list[str], list[int]]:
-        if self.provided: 
-            random.shuffle(self.provided)
-            return (self.provided, [])
         assert n <= self.count, f"Requested {n} prompts but only {self.count} available"
         rng = np.random.default_rng(seed)
         p = [ pow(weighted, x) for x in self.data['score'] ] if weighted else [1.0] * self.count
@@ -81,13 +78,13 @@ class Creator:
     def get_new_prompt(self, opener:str, seed:int, settings_list:list[str], use_n=10, weighted=1.0):
         opener  = opener.strip()
         if self.is_context:
-            ps, ns = self.provided, []
+            ps, ns = self.context, []
         else:
             ps, ns  = self.get_some_prompts(use_n, seed, weighted)
         prompt  = START + (END+START).join(ps) + END + START + opener
         idx_str = ",".join([str(idx) for idx in ns])
 
-        payload = DEFAULTS | {"prompt":prompt} | parse_settings_list(settings_list)
+        payload = DEFAULTS | {"prompt":prompt, "sampler_seed": ((seed or 0)%1000000)} | parse_settings_list(settings_list)
         response = requests.post(self.server, json=payload, verify=False)
         if response.status_code != 200: raise Exception(f"Server {self.server} returned {response.status_code}: {response.reason}")
 
