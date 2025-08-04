@@ -14,7 +14,7 @@ def load_image(filepath:str) -> torch.Tensor:
         image = np.array(image).astype(np.float32) / 255.0
         return torch.from_numpy(image)[None,], json.dumps(text, indent=1)
 
-@ui_signal(['modify_self','terminate','display_text'])
+@ui_signal(['modify_self','terminate'])
 class IterateImages:
 
     FUNCTION = "func"
@@ -68,12 +68,9 @@ class IterateImages:
         self.files_left = [f for f in self.files_left if f!=filename]
 
         filepath = os.path.join(folder, filename)
-        
-        message = f"{filename}\n{len(self.files_left)} files remaining"
-
         image, metadata = load_image(filepath)
-
         textpath = os.path.splitext(filepath)[0] + ".txt"
+        
         try: 
             with open(textpath,'r') as f: text = "\n".join(f.readlines())
         except:
@@ -85,6 +82,6 @@ class IterateImages:
             while os.path.exists(outfile := os.path.join(bindir, filename)): filename = f"{random.randint(0,9)}{filename}"
             os.rename(filepath, outfile)
 
-        return (image, filepath, metadata, text, len(self.files_left), [("reset","no"),] if reset=="yes" else [], "no" if len(self.files_left) else "autoqueueoff", message)
+        return (image, filepath, metadata, text, len(self.files_left), [("reset","no"),] if reset=="yes" else [], "no" if len(self.files_left) else "autoqueueoff")
 
 CLAZZES = [IterateImages,]

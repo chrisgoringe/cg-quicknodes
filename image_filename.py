@@ -35,12 +35,15 @@ class SaveTextfile:
         return {
             "required": {
                 "text": ("STRING", {"default": ""}),
-                "filepath": ("STRING", {"default": "output", "tooltip": "The filepath, extension will be changed to .txt."}),
+                "filepath": ("STRING", {"default": "output", "tooltip": "The filepath, extension will be changed."}),
+            },
+            "optional": {  
+                "ext": ("STRING", {"default": ".txt", "tooltip": "The file extension to use."}),
             }
         }
 
-    def func(self, text, filepath):
-        filepath = os.path.splitext(filepath)[0]+".txt"
+    def func(self, text, filepath, ext=".txt"):
+        filepath = os.path.splitext(filepath)[0]+ext
         with open(filepath, 'w', encoding="utf-8") as f:
             print(text, file=f)
         return ()

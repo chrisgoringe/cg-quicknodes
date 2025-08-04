@@ -88,19 +88,22 @@ class AppendRandomFromList:
                                 "seed": ("INT", {"default":0, "min":-1e9, "max":1e9}),
                                 "seed_offset": ("INT", {"default":0, "min":-1e9, "max":1e9}),
                                 "divider": ("STRING", {"default":", "}),
-                                "options": ("STRING", {"default":"", "multiline": True})
+                                "options_or_filepath": ("STRING", {"default":"", "multiline": True})
                             },
                 "optional": {   
                                 "in_string": ("STRING", {"default":"", "forceInput":True} ),
                             }
                 }
-    RETURN_TYPES = ("STRING",)
+    RETURN_TYPES = ("STRING","STRING",)
+    RETURN_NAMES = ("combined", "addition",)
 
-    def func(self,seed,seed_offset,divider,options,in_string=None):
+    def func(self,seed,seed_offset,divider,options_or_filepath,in_string=None):
         random.seed(seed+seed_offset)
-        choices = to_string_list(options)
-        string = random.choice( choices )  if len(choices) else ""
-        if in_string: string = in_string + ((divider + string) if string else "")
-        return (string,)   
+        choices = to_string_list(options_or_filepath)
+        if len(choices)==1 and choices[0].endswith(".txt"):
+            with open(choices[0], "r") as f: choices = [line.strip() for line in f if line.strip()]
+        addition = random.choice( choices )  if len(choices) else ""
+        outstring = (in_string + ((divider + addition) if addition else "")) if in_string else addition
+        return (outstring, addition,)   
     
 CLAZZES = [ListFromList, RandomFromList, RandomFloats, AppendRandomFromList, RandomInt]

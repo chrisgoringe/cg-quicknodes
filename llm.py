@@ -40,6 +40,18 @@ class LLM:
         return ((f"{starter} " if starter else "")+reply,topic,)
     
 CLAZZES = [LLM,]
+
+import codecs
+
+def obfus(s, obf) -> str:
+    if not isinstance(obf, int): obf = 1 if obf else 0
+    if obf==1: return codecs.encode(s,'rot13')
+    raise NotImplementedError("")
+
+def defus(s, obf) -> str:
+    if not isinstance(obf, int): obf = 1 if obf else 0
+    if obf==1: return codecs.decode(s,'rot13')
+    raise NotImplementedError("")
    
 try:
     from resources.creative import Creator
@@ -57,15 +69,15 @@ try:
                     }
 
         CATEGORY = "quicknodes"
-        RETURN_TYPES = ("STRING","STRING",)
-        RETURN_NAMES = ("prompt","info",)
+        RETURN_TYPES = ("STRING",)
+        RETURN_NAMES = ("prompt",)
         FUNCTION = "func"
         
         def func(self, opener:str, server:str, settings:str, seed:int, context:str="", **kwargs):
             creator = Creator.context_instance(server, context)
             settings_list = [s.strip() for s in settings.split(',') if s.strip() and '=' in s]
-            prompt, info  = creator.get_new_prompt(opener=opener, seed=seed, settings_list=settings_list)
-            return (prompt,info,)
+            prompt, _  = creator.get_new_prompt(opener=opener, seed=seed, settings_list=settings_list)
+            return (prompt,)
         
     def count(folder, ext=None):
         return len([f for f in os.listdir(folder) if (ext is None or os.path.splitext(f)[1]==ext)])
@@ -91,26 +103,31 @@ try:
         RETURN_NAMES = ("count",)
         OUTPUT_NODE = True
         FUNCTION = "func"
+        
 
         def func(self, prompt, folder, info=None, maximum=5, sleeponskip=1):
+            obf = 1
             if count(folder, ".json")<maximum:
                 filename = os.path.join(folder, f"{random.randint(100000,999999)}.json")
-                payload = {"prompt":prompt}
-                if info: payload['info']=info
+                payload = {"prompt":obfus(prompt, obf), "obfus":obf}
+                if info: 
+                    infos = info.split('|')
+                    if len(infos)==2: infos[1] = obfus(infos[1], obf)
+                    payload['info'] = '|'.join(infos)
                 with open(filename, 'w') as fh: json.dump(payload, fh)
             else:
                 time.sleep(sleeponskip)
             n = count(folder, ".json")
             return (n, f"{n} in folder")
     
-    @ui_signal(['display_text'])
     class PromptUndump:
         @classmethod
         def INPUT_TYPES(cls):
             return {"required": 
                         {
                             "folder": ("STRING",{"default":"promptdump"}),
-                            "delete": ("BOOLEAN",{"default":True}),
+                            "mode": (["random-and-delete", "random-and-keep", "deterministic-and-delete", "deterministic-and-keep"], {}),
+                            "seed": ("INT", {"default":0, "min":0, "max":999999, "tooltip":"Seed for random selection"}),
                         }
                     }
 
@@ -120,17 +137,26 @@ try:
         FUNCTION = "func"
 
         @classmethod
-        def IS_CHANGED(s, images):
+        def IS_CHANGED(s, **kwargs):
             return float("NaN")
         
-        def func(self, folder, delete):
+        def func(self, folder, mode, seed):
             filenames = [os.path.join(folder,f) for f in os.listdir(folder) if os.path.splitext(f)[1]==".json"]
+            if "random" in mode:
+                if seed: random.seed(seed)
+            else:
+                filenames.sort()
             if not filenames: raise InterruptProcessingException()
-            filename = random.choice(filenames)
+            filename = random.choice(filenames) if "random" in mode else filenames[0]
             with open(filename, 'r') as fh: data = json.load(fh)
-            if delete: os.remove(filename)
+            if "delete" in mode: os.remove(filename)
             n = count(folder, ".json")
-            return ( data['prompt'], data['info'], n, f"{n} left" )        
+            if (obf:=data.get('obfus',0)): 
+                data['prompt'] = defus(data['prompt'], obf)
+                infos = data['info'].split('|')
+                if len(infos)==2: infos[1] = defus(infos[1], obf)
+                data['info'] = '|'.join(infos)
+            return ( data['prompt'], data['info'], n )        
 
     class PickFromDataset:
         @classmethod

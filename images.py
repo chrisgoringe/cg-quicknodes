@@ -2,6 +2,45 @@ import torch
 import math
 from ui_decorator import ui_signal
 
+import os
+from PIL import Image, ImageOps
+import numpy as np
+
+def load_image_as_tensor(filepath: str) -> torch.Tensor:
+    image = ImageOps.exif_transpose(Image.open(filepath))
+    image = np.array(image).astype(np.float32) / 255.0
+    image = torch.from_numpy(image).unsqueeze(0)
+    return image
+
+class LoadImagesAsBatch:
+    CATEGORY = "quicknodes/images"
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "folder": ("STRING", {"default":""}),
+                "indices": ("STRING", {"default": "-4:", "tooltip" : "python slice syntax to select images, e.g. -4: for last 4 images"}),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE","INT","INT","STRING")
+    RETURN_NAMES = ("image","width","height","shape")
+    FUNCTION = "func"
+
+    CATEGORY = "tools"
+
+    def func(self, folder:str, indices:str) -> tuple[torch.Tensor,]:
+        filepaths = [ os.path.join(folder,f) for f in os.listdir(folder) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')) ]
+        filepaths.sort()
+        x, y = indices.split(':')
+        x = int(x) if x else None
+        y = int(y) if y else None
+
+        images = torch.cat([load_image_as_tensor(f) for f in filepaths[x:y]])
+        B, H, W, C = images.shape
+
+        return (images, W, H, f"B={B} W={W} H={H}") 
+
 @ui_signal('display_text')
 class ImageDifference:
     CATEGORY = "quicknodes/images"
@@ -59,7 +98,8 @@ class SizePicker:
     @classmethod
     def INPUT_TYPES(s):
        return {"required": { 
-           "size": (['1024x1024 (1:1)', '1152x896 (1.286:1)', '1216x832 (1.462:1)', '1344x768 (1.75:1)', '1536x640 (2.4:1)', '1280x720 (16:9)', "1920x1080 (16:9)"],), 
+           "size": (['1024x1024 (1:1)', '1152x896 (1.286:1)', '1216x832 (1.462:1)', '1344x768 (1.75:1)', '1536x640 (2.4:1)', '1280x720 (16:9)', "1920x1080 (16:9)",
+                     '512x512 (1:1)', '576x448 (1.286:1)', '608x416 (1.462:1)', '672x384 (1.75:1)', '768x320 (2.4:1)', '640x360 (16:9)', ],), 
            "orientation": (["landscape", "portrait"],)
            }  }
     
@@ -74,7 +114,39 @@ class SizePicker:
             return wh
         else:
             return (wh[1], wh[0])
-    
+        
+def resize(image, height, width):
+    h,w = image.shape[1:3]
+    if h==height and w==width:
+        return image
+    permed = torch.permute(image,(0, 3, 1, 2))
+    scaled = torch.nn.functional.interpolate(permed, size=(height, width))
+    return torch.permute(scaled, (0, 2, 3, 1))
+
+class ResizeByArea:
+    CATEGORY = "quicknodes/images"
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required":  { 
+            "constraint": (["x8", "x64", "none"],),
+            "image": ("IMAGE",),
+            "size": ("INT", {"default":1024, "min":1, "max":10000, "tooltip":"Square root of target area in pixels"}),
+        }}
+    RETURN_TYPES = ("IMAGE","INT","INT","INT","STRING")
+    RETURN_NAMES = ("image","width","height","area","string")
+    FUNCTION = "func"
+
+    def func(self, constraint:str, image:torch.Tensor, size:int):
+        h, w = image.shape[1:3]
+        exact_scale = size / math.sqrt(h * w)
+        ideal_h, ideal_w  = h * exact_scale, w * exact_scale
+
+        c = 64 if constraint=="x64" else (8 if constraint=="x8" else 1)
+        out_h, out_w = (ideal_h+(c/2) // c) * c, (ideal_w+(c/2) // c) * c
+
+        return (resize(image, int(out_h), int(out_w)),
+                int(out_w), int(out_h), int(out_w * out_h),
+                f"{int(out_w)}x{int(out_h)} ({int(out_w * out_h)})")
 
 class ResizeImage:
     CATEGORY = "quicknodes/images"
@@ -91,15 +163,6 @@ class ResizeImage:
     RETURN_TYPES = ("IMAGE","IMAGE","INT","INT","STRING")
     RETURN_NAMES = ("image","matched_image","width","height","string")
     FUNCTION = "func"
-
-    @classmethod
-    def resize(cls, image, height, width):
-        h,w = image.shape[1:3]
-        if h==height and w==width:
-            return image
-        permed = torch.permute(image,(0, 3, 1, 2))
-        scaled = torch.nn.functional.interpolate(permed, size=(height, width))
-        return torch.permute(scaled, (0, 2, 3, 1))
 
     def func(self, constraint:str, image:torch.tensor, factor:float=1.0, max_dimension:int=0, image_to_match:torch.tensor=None):
         if image_to_match is not None:
@@ -133,8 +196,8 @@ class ResizeImage:
         height = int(height)
         width = int(width)
         
-        return (self.resize(image, height, width),
-                self.resize(image_to_match if image_to_match is not None else image, height, width),
+        return (resize(image, height, width),
+                resize(image_to_match if image_to_match is not None else image, height, width),
                 width, height, f"{width}x{height}") 
 
-CLAZZES = [ ImageSize, ResizeImage, SizePicker, ImageDifference, CalculateRescale]
+CLAZZES = [ ImageSize, ResizeImage, SizePicker, ImageDifference, CalculateRescale, LoadImagesAsBatch, ResizeByArea]
