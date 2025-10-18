@@ -1,34 +1,68 @@
-class Simple:
-    CATEGORY = "quicknodes/simples"
-    @classmethod    
-    def INPUT_TYPES(s): return { "required":  { s.RETURN_TYPES[0].lower(): (s.RETURN_TYPES[0],s.extras()), } }
-    RETURN_TYPES:tuple[str] = None
-    FUNCTION = "func"
-    def func(self, **kwargs): return ( kwargs[self.RETURN_TYPES[0].lower()], )
+from comfy_api.v0_0_2 import io
 
-class SimpleInt(Simple):
-    RETURN_TYPES = ("INT",)
+class SimpleInt(io.ComfyNode):
     @classmethod
-    def extras(s): return {"default":0, "min":-10000000, "max":10000000}    
+    def define_schema(cls):
+        return io.Schema(
+            node_id         = "SimpleInt",
+            display_name    = "Int",
+            category        = "quicknodes/simples",
+            description     = "A simple integer",
+            inputs          = [ io.Int.Input("integer_in", display_name="int"), ],
+            outputs         = [ io.Int.Output("integer_out", display_name="int"), ],
+        )
 
-class SimpleFloat(Simple):
-    RETURN_TYPES = ("FLOAT",)
     @classmethod
-    def extras(s): return {"default":0.0, "min":-10000, "max":10000}        
-
-class SimpleString(Simple):
-    RETURN_TYPES = ("STRING",)
+    def execute(cls, **kwargs) -> io.NodeOutput: 
+        return io.NodeOutput(kwargs['integer_in'],)
+    
+class SimpleFloat(io.ComfyNode):
     @classmethod
-    def extras(s): return {"default":""}
+    def define_schema(cls):
+        return io.Schema(
+            node_id         = "SimpleFloat",
+            display_name    = "Int",
+            category        = "quicknodes/simples",
+            description     = "A simple integer",
+            inputs          = [ io.Float.Input("float_in", display_name="float"), ],
+            outputs         = [ io.Float.Output("float_out", display_name="float"), ],
+        )
 
-class SimpleMultilineString(Simple):
-    RETURN_TYPES = ("STRING",)
     @classmethod
-    def extras(s): return {"default":"", "multiline":True}
-
-class SimpleLatent(Simple):
-    RETURN_TYPES = ("LATENT",)
+    def execute(cls, **kwargs) -> io.NodeOutput: 
+        return io.NodeOutput(kwargs['float_in'],)
+    
+class SimpleString(io.ComfyNode):
     @classmethod
-    def extras(s): return {}    
+    def define_schema(cls):
+        return io.Schema(
+            node_id         = "SimpleString",
+            display_name    = "Int",
+            category        = "quicknodes/simples",
+            description     = "A simple integer",
+            inputs          = [ io.String.Input("string_in", display_name="string"), ],
+            outputs         = [ io.String.Output("string_out", display_name="string"), ],
+        )
 
-CLAZZES = [SimpleInt,SimpleFloat,SimpleString,SimpleMultilineString, SimpleLatent]
+    @classmethod
+    def execute(cls, **kwargs) -> io.NodeOutput: 
+        return io.NodeOutput(kwargs['string_in'],)
+    
+    
+class SimpleMultilineString(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id         = "SimpleMultilineString",
+            display_name    = "Int",
+            category        = "quicknodes/simples",
+            description     = "A simple integer",
+            inputs          = [ io.String.Input("string_in", display_name="string", multiline=True), ],
+            outputs         = [ io.String.Output("string_out", display_name="string"), ],
+        )
+
+    @classmethod
+    def execute(cls, **kwargs) -> io.NodeOutput: 
+        return io.NodeOutput(kwargs['string_in'],)
+
+CLAZZES = [SimpleInt,SimpleFloat,SimpleMultilineString, SimpleString]

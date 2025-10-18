@@ -6,11 +6,38 @@ import os
 from PIL import Image, ImageOps
 import numpy as np
 
+from typing import Optional
+from comfy_api.latest import ComfyExtension, io
+
 def load_image_as_tensor(filepath: str) -> torch.Tensor:
     image = ImageOps.exif_transpose(Image.open(filepath))
     image = np.array(image).astype(np.float32) / 255.0
     image = torch.from_numpy(image).unsqueeze(0)
     return image
+
+class ImageMultiBatch(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id="ImageMultiBatch",
+            category="quicknodes/images",
+            inputs=[
+                io.Image.Input("image1", optional=True),
+                io.Image.Input("image2", optional=True),
+                io.Image.Input("image3", optional=True),
+                io.Image.Input("image4", optional=True),
+            ],
+            outputs=[
+                io.Image.Output("image", display_name="images"),
+                io.Int.Output("frames", display_name="frames")
+            ],
+        )
+
+    @classmethod
+    def execute(cls, **kwargs)-> io.NodeOutput:
+        images:list[torch.Tensor] = [kwargs[k] for k in kwargs if kwargs[k] is not None]
+        s = torch.cat(images, dim=0) if images else None
+        return io.NodeOutput(s, s.shape[0] if s is not None else 0) 
 
 class LoadImagesAsBatch:
     CATEGORY = "quicknodes/images"
@@ -29,7 +56,7 @@ class LoadImagesAsBatch:
 
     CATEGORY = "tools"
 
-    def func(self, folder:str, indices:str) -> tuple[torch.Tensor,]:
+    def func(self, folder:str, indices:str) -> tuple[torch.Tensor,int,int,str]:
         filepaths = [ os.path.join(folder,f) for f in os.listdir(folder) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')) ]
         filepaths.sort()
         x, y = indices.split(':')
@@ -70,13 +97,30 @@ class ImageSize:
     @classmethod
     def INPUT_TYPES(s):
         return {"required": { "image": ("IMAGE",), } }
-    RETURN_TYPES = ("INT","INT")
-    RETURN_NAMES = ("w","h")
+    RETURN_TYPES = ("IMAGE","INT","INT")
+    RETURN_NAMES = ("image","w","h")
     FUNCTION = "func"
 
     def func(self, image:torch.Tensor):
         b, h, w, c = image.shape
-        return (w,h,f"{w} x {h}")
+        return (image,w,h,f"{w} x {h}")
+    
+class ImagesSize:
+    CATEGORY = "quicknodes/images"
+    TIP = {"tooltip":"returns the size of the first image that is not None"}
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"optional": { "i1": ("IMAGE",s.TIP), "i2": ("IMAGE",s.TIP), "i3": ("IMAGE",s.TIP), } }
+    RETURN_TYPES = ("INT","INT")
+    RETURN_NAMES = ("w","h")
+    FUNCTION = "func"
+
+    def func(self, i1:Optional[torch.Tensor]=None, i2:Optional[torch.Tensor]=None, i3:Optional[torch.Tensor]=None):
+        for i in [i1,i2,i3]:
+            if i is not None:
+                b, h, w, c = i.shape
+                return (w,h)
+        return (0,0)
     
 class CalculateRescale:
     CATEGORY = "quicknodes/images"
@@ -126,27 +170,28 @@ def resize(image, height, width):
 class ResizeByArea:
     CATEGORY = "quicknodes/images"
     @classmethod
-    def INPUT_TYPES(s):
+    def INPUT_TYPES(cls):
         return {"required":  { 
-            "constraint": (["x8", "x64", "none"],),
+            "constraint": (["x8", "x16", "x64", "x112", "none"],),
             "image": ("IMAGE",),
             "size": ("INT", {"default":1024, "min":1, "max":10000, "tooltip":"Square root of target area in pixels"}),
+            "down_only": ("BOOLEAN", {"default":False, "tooltip":"Only resize if the image is larger than the target area (will still adjust to meet constraint)"}),
         }}
-    RETURN_TYPES = ("IMAGE","INT","INT","INT","STRING")
-    RETURN_NAMES = ("image","width","height","area","string")
+    RETURN_TYPES = ("IMAGE","INT","INT",)
+    RETURN_NAMES = ("image","width","height",)
     FUNCTION = "func"
 
-    def func(self, constraint:str, image:torch.Tensor, size:int):
+    def func(self, constraint:str, image:torch.Tensor, size:int, down_only:bool=False):
         h, w = image.shape[1:3]
-        exact_scale = size / math.sqrt(h * w)
-        ideal_h, ideal_w  = h * exact_scale, w * exact_scale
+        scale = size / math.sqrt(h * w)
 
-        c = 64 if constraint=="x64" else (8 if constraint=="x8" else 1)
-        out_h, out_w = (ideal_h+(c/2) // c) * c, (ideal_w+(c/2) // c) * c
+        if down_only and scale > 1.0: scale = 1.0
 
-        return (resize(image, int(out_h), int(out_w)),
-                int(out_w), int(out_h), int(out_w * out_h),
-                f"{int(out_w)}x{int(out_h)} ({int(out_w * out_h)})")
+        c = 1 if constraint=="none" else int(constraint[1:])
+        h, w = int(((h*scale + (c/2)) // c) * c), int(((w*scale + (c/2)) // c) * c)
+        image = resize(image, h, w)
+
+        return (image, w, h, )
 
 class ResizeImage:
     CATEGORY = "quicknodes/images"
@@ -164,7 +209,7 @@ class ResizeImage:
     RETURN_NAMES = ("image","matched_image","width","height","string")
     FUNCTION = "func"
 
-    def func(self, constraint:str, image:torch.tensor, factor:float=1.0, max_dimension:int=0, image_to_match:torch.tensor=None):
+    def func(self, constraint:str, image:torch.Tensor, factor:float=1.0, max_dimension:int=0, image_to_match:Optional[torch.Tensor]=None):
         if image_to_match is not None:
             height, width = image_to_match.shape[1:3]
         else:
@@ -200,4 +245,14 @@ class ResizeImage:
                 resize(image_to_match if image_to_match is not None else image, height, width),
                 width, height, f"{width}x{height}") 
 
-CLAZZES = [ ImageSize, ResizeImage, SizePicker, ImageDifference, CalculateRescale, LoadImagesAsBatch, ResizeByArea]
+CLAZZES = [ ImageSize, ImagesSize, ResizeImage, SizePicker, ImageDifference, CalculateRescale, LoadImagesAsBatch, ResizeByArea, ImageMultiBatch]
+'''
+class QuicknodesExtension(ComfyExtension):
+    @override
+    async def get_node_list(self) -> list[type[io.ComfyNode]]:
+        return [
+            ImageMultiBatch,
+        ]
+
+async def comfy_entrypoint() -> QuicknodesExtension:
+    return QuicknodesExtension()'''

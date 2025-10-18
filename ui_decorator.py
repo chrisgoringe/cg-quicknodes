@@ -10,7 +10,7 @@ def recursive_add(signals:list, args):
             raise Exception("ui_decorator takes str or iter(str)")
     return signals
 
-def ui_signal(*args):
+def ui_signal(*args, output_node = True):
     """
     Return a decorator for Node classes.
     @param one or more strings or list of strings
@@ -23,7 +23,7 @@ def ui_signal(*args):
     'set_title_color': str : 'reset' or colorcode
 
     The decorator performs the following:
-    The class has OUTPUT_NODE set to True.
+    The class has OUTPUT_NODE set to True. unless output_node=False is passed
     The class UI_OUTPUT is appended (or created) with a comma separated list of these signals
     The class FUNCTION is wrapped such that the last len(signals) are removed, and added to the
     ui dictionary using signals as keys.
@@ -55,7 +55,7 @@ def ui_signal(*args):
             return { "ui":returns_ui, "result": returns_tuple }
         clazz._ui_signal_decorated_function = _ui_signal_decorated_function
         clazz.FUNCTION = '_ui_signal_decorated_function'
-        clazz.OUTPUT_NODE = True
+        clazz.OUTPUT_NODE = output_node
         clazz.UI_OUTPUT = clazz.UI_OUTPUT+"," if hasattr(clazz, 'UI_OUTPUT') else ""
         clazz.UI_OUTPUT += ",".join(signals)
         clazz.DESCRIPTION = clazz.UI_OUTPUT+"," if hasattr(clazz, 'UI_OUTPUT') else ""

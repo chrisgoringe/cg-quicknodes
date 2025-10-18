@@ -56,6 +56,24 @@ class Permutations:
             [start+step*((i//steps) % steps) for i in range(n)],
             [start+step*(i//(steps*steps))   for i in range(n)],
         )
+    
+def to_string_list(options):
+    lines = ( o.split("#")[0].strip() for o in options.split("\n") if o )
+    return list( line for line in lines if line )
 
+class PickFromList:
+    CATEGORY = "quicknodes/random"
+    FUNCTION = "func"
+    RETURN_TYPES = ("STRING",)
+    @classmethod    
+    def INPUT_TYPES(s):
+        return { "required":  { 
+            "options": ("STRING", {"default":"", "multiline": True, "tooltip":"one entry per line. # comments"}),
+            "entry": ("INT", {"default":0, "min":0, "max":1e9, "tooltip":"zero index, wraps"}),
+        } }
 
-CLAZZES = [IntList,FloatList, Permutations]
+    def func(self,options,entry):
+        choices = to_string_list(options)
+        return (choices[entry % len(choices)],) if choices else ("",)
+    
+CLAZZES = [IntList,FloatList, Permutations, PickFromList]

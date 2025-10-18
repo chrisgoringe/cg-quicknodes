@@ -5,8 +5,10 @@ from PIL.PngImagePlugin import PngInfo
 import numpy as np
 import hashlib
 from nodes import SaveImage
+
 from comfy.cli_args import args
 import folder_paths
+
 
 class SaveFilename(SaveImage):
     CATEGORY = "quicknodes/images"
@@ -22,6 +24,29 @@ class SaveFilename(SaveImage):
         if 'subfolder' in outfile and outfile['subfolder']: directory = os.path.join(directory, outfile['subfolder'])
         ret['result'] = ( os.path.join(directory, outfile['filename']), )
         return ret
+    
+    
+class LoadTextfile:
+    CATEGORY = "quicknodes/images"
+
+    RETURN_TYPES = ("STRING",)
+    FUNCTION = "func"
+    OUTPUT_NODE = True
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "filepath": ("STRING", {"default": "output", "tooltip": "The filepath, extension will be changed."}),
+                "remove": ("BOOLEAN", {"default": False, "tooltip": "Remove the file after reading."}),
+            }
+        }
+
+    def func(self, filepath, remove ):
+        filepath = os.path.splitext(filepath)[0]+".txt"
+        with open(filepath, 'r', encoding="utf-8") as fh: s = fh.read()
+        if remove: os.remove(filepath)
+        return (s.strip(),)
     
 class SaveTextfile:
     CATEGORY = "quicknodes/images"
@@ -44,6 +69,7 @@ class SaveTextfile:
 
     def func(self, text, filepath, ext=".txt"):
         filepath = os.path.splitext(filepath)[0]+ext
+        if not os.path.exists(os.path.split(filepath)[0]): os.makedirs(os.path.split(filepath)[0], exist_ok=True)
         with open(filepath, 'w', encoding="utf-8") as f:
             print(text, file=f)
         return ()
@@ -95,45 +121,6 @@ class SaveImageExplicitPath:
 
         return ()
     
-'''
-class LoadImageWithFilename():
-    RETURN_TYPES = ("IMAGE", "MASK", "STRING",)
-    RETURN_NAMES = ("IMAGE", "MASK", "filepath",)
-    FUNCTION = "func"
-    directory = os.path.join(base_path,"styles")
+CLAZZES = [SaveImageExplicitPath, SaveFilename, SaveTextfile, LoadTextfile]
 
-    @classmethod
-    def INPUT_TYPES(cls):
-        files = [f for f in os.listdir(cls.directory) if os.path.isfile(os.path.join(cls.directory, f))]
-        return {"required": {"image": (sorted(files), {"image_upload": True})}, }
 
-    CATEGORY = "quicknodes/images"
-
-    def func(self, image):
-        image_path = os.path.join(self.directory,image)
-        i = Image.open(image_path)
-        i = ImageOps.exif_transpose(i)
-        image = i.convert("RGB")
-        image = np.array(image).astype(np.float32) / 255.0
-        image = torch.from_numpy(image)[None,]
-        if 'A' in i.getbands():
-            mask = np.array(i.getchannel('A')).astype(np.float32) / 255.0
-            mask = 1. - torch.from_numpy(mask)
-        else:
-            mask = torch.zeros((64,64), dtype=torch.float32, device="cpu")
-        return (image, mask.unsqueeze(0), image)
-
-    @classmethod
-    def IS_CHANGED(cls, image):
-        image_path = os.path.join(cls.directory,image)
-        m = hashlib.sha256()
-        with open(image_path, 'rb') as f:
-            m.update(f.read())
-        return m.digest().hex()
-
-    @classmethod
-    def VALIDATE_INPUTS(cls, image):
-        return True if os.path.exists( os.path.join(cls.directory,image) ) else "Invalid image file: {}".format(image)
-    '''
-CLAZZES = [SaveImageExplicitPath, SaveFilename, SaveTextfile]
-#LoadImageWithFilename, 
