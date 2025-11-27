@@ -11,7 +11,7 @@ class WaitABit:
     FUNCTION = "func"
     def func(self,seconds, image):
         end = time.monotonic() + seconds
-        while time.monotonic < end:
+        while time.monotonic() < end:
             throw_exception_if_processing_interrupted()
             time.sleep(1)
         return (image,)

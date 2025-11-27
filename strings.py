@@ -1,5 +1,6 @@
 from datetime import date
 import re, os, json
+from comfy.comfy_types.node_typing import IO
 
 class ToString:
     FUNCTION = "func"
@@ -26,8 +27,7 @@ class ToString:
     def func(self, format_="", int_=None, float_=None, float_dp=2, string_="", default=""):
         if float_ is not None:
             if format_:  return (self.wrap_format(format_.strip()).format(float_),)
-            if float_dp: return (f"{round(float_, float_dp)}",)
-            else:        return (f"{float_}",)
+            else:        return (f"{round(float_, float_dp)}",)
         elif int_ is not None:       
             if format_:  return (self.wrap_format(format_.strip()).format(int_),)
             else:        return (f"{int_}",)
@@ -66,14 +66,14 @@ class CombineStrings:
     @classmethod
     def INPUT_TYPES(s):
         return {
-            "required": {"template": ("STRING", {"default":"[X] [Y]", "tooltip":"use [D] for date" })},
-            "optional": { "x": ("STRING", {}), "y": ("STRING", {}) }
+            "required": {"template": ("STRING", {"default":"[X]_[Y]_[Z]", "tooltip":"use [D] for date" })},
+            "optional": { "x": (IO.ANY, {}), "y": (IO.ANY, {}), "z": (IO.ANY, {}) }
         }
-    RETURN_TYPES = ("STRING","STRING","STRING",)
-    RETURN_NAMES = ("merged","x","y")
-    def func(self, template:str, x="", y=""):
-        r = template.replace("[X]",str(x)).replace("[Y]",str(y)).replace('[D]',date.today().isoformat())
-        return (r,x,y,)
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("merged",)
+    def func(self, template:str, x="", y="", z=""):
+        r = template.replace("[X]",str(x)).replace("[Y]",str(y)).replace("[Z]",str(z)).replace('[D]',date.today().isoformat())
+        return (r,)
     
 class Substitute:
     FUNCTION = "func"

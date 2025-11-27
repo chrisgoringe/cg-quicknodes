@@ -8,7 +8,7 @@ class SimpleInt(io.ComfyNode):
             display_name    = "Int",
             category        = "quicknodes/simples",
             description     = "A simple integer",
-            inputs          = [ io.Int.Input("integer_in", display_name="int"), ],
+            inputs          = [ io.Int.Input("integer_in", display_name="int", min=-1000000, max=1000000), ],
             outputs         = [ io.Int.Output("integer_out", display_name="int"), ],
         )
 

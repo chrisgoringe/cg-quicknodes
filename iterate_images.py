@@ -11,6 +11,7 @@ def load_image(filepath:str) -> tuple[torch.Tensor, str]:
         i = Image.open(filepath)
         text = i.text if hasattr(i,'text') else {} # type: ignore
         i = ImageOps.exif_transpose(i)
+        assert i
         image = i.convert("RGB")
         image = np.array(image).astype(np.float32) / 255.0
         return torch.from_numpy(image)[None,], json.dumps(text, indent=1)
@@ -36,29 +37,40 @@ restart_iterate restarts and switches to iterate.'''
 
     @classmethod    
     def INPUT_TYPES(cls):
-        return {"required":  { 
-            "folder": ("STRING", {} ), 
-            "extensions": ("STRING", {"default":".jpg,.png"}),
-            "require_text": ("BOOLEAN", {"default":False, "tooltip":"Only pick image files which also hacve a .txt file"}),
-            "text_extension": (['.txt', '.json'], {}),
-            "order": (["newest_first", "oldest_first", "alphabetical", "random"], {}),
-            "mode": (["iterate", "loop", "replace", "restart_iterate"], {"tooltip":cls.MODE_TIP}),
-            "delete": ("BOOLEAN", {"default":False, "tooltip":"Actually moves them to subdirectory 'bin'"}),
-        }}
+        return {
+            "required":  { 
+                "folder": ("STRING", {} ), 
+                "extensions": ("STRING", {"default":".jpg,.png"}),
+                "require_text": ("BOOLEAN", {"default":False, "tooltip":"Only pick image files which also hacve a .txt file"}),
+                "text_extension": (['.txt', '.json'], {}),
+                "order": (["newest_first", "oldest_first", "alphabetical", "random"], {}),
+                "mode": (["iterate", "loop", "replace", "restart_iterate"], {"tooltip":cls.MODE_TIP}),
+                "delete": ("BOOLEAN", {"default":False, "tooltip":"Actually moves them to subdirectory 'bin'"}),
+            }, 
+            "optional" : {
+                "recurse": ("BOOLEAN", {"default":False}),
+            }
+        }
 
     RETURN_TYPES = ("IMAGE","STRING","STRING","STRING","INT",)
     RETURN_NAMES = ("image","filepath","metadata",".txt","left",)
     CATEGORY = "quicknodes/images"
 
-    def load_and_sort(self, folder, extensions, require_text, text_extension, order):
-        def make_ext(s:str) -> str: return s.strip() if s.strip().startswith(".") else "."+s.strip()
+    def find_in_folder(self, folder, test, recurse) -> list[str]:
+        files = [file for file in os.listdir(folder) if test(file)]
+        if recurse:
+            for dir in [os.path.join(folder,d) for d in os.listdir(folder) if os.path.isdir(d)]:
+                files.extend( self.find_in_folder(dir, test, recurse ) )
+        return files
+
+    def load_and_sort(self, folder, extensions, require_text, text_extension, order, recurse):
+        make_ext = lambda s : str(s.strip() if s.strip().startswith(".") else "."+s.strip())
         extension_list = [make_ext(s) for s in extensions.split(",")]
-        def matches_extension(filename):
-            split = os.path.splitext(filename)
-            return len(split)>0 and split[1] in extension_list
-        def has_textfile(filename):
-            return os.path.exists(os.path.join(folder, os.path.splitext(filename)[0]+text_extension))
-        self.files_left = [file for file in os.listdir(folder) if matches_extension(file) and (not require_text or has_textfile(file))]
+        matches_extension = lambda filename : bool(os.path.splitext(filename)[1].lower() in extension_list)
+        has_textfile = lambda filename : os.path.exists(os.path.join(folder, os.path.splitext(filename)[0]+text_extension))
+        test = lambda file : matches_extension(file) and (not require_text or has_textfile(file))
+
+        self.files_left = self.find_in_folder( folder, test, recurse ) 
 
         if order=="oldest_first" or order=="newest_first": key = lambda f:os.path.getmtime(os.path.join(folder, f))
         elif order=="random":                              key = lambda _:random.random()
@@ -70,8 +82,8 @@ restart_iterate restarts and switches to iterate.'''
     def IS_CHANGED(cls, **kwargs):
         return float("NaN")
         
-    def func(self, folder:str, extensions:str, require_text:bool, text_extension:str, order:str, mode:str, delete:bool):
-        hsh = f"{folder}{extensions}{require_text}{text_extension}{order}"
+    def func(self, folder:str, extensions:str, require_text:bool, text_extension:str, order:str, mode:str, delete:bool, recurse:bool=False):
+        hsh = f"{folder}{extensions}{require_text}{text_extension}{order}{recurse}"
         if (    
                 self.files_left is None or 
                 mode=="replace"         or 
@@ -79,7 +91,7 @@ restart_iterate restarts and switches to iterate.'''
                 hsh!=self.hsh           or 
                 (mode=="loop" and not self.files_left)
             ):
-            self.load_and_sort(folder, extensions, require_text, text_extension, order) 
+            self.load_and_sort(folder, extensions, require_text, text_extension, order, recurse) 
             self.hsh = hsh
 
         if not self.files_left: raise InterruptProcessingException()

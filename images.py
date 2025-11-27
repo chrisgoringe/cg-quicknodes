@@ -9,11 +9,66 @@ import numpy as np
 from typing import Optional
 from comfy_api.latest import ComfyExtension, io
 
+import node_helpers
+
 def load_image_as_tensor(filepath: str) -> torch.Tensor:
     image = ImageOps.exif_transpose(Image.open(filepath))
     image = np.array(image).astype(np.float32) / 255.0
     image = torch.from_numpy(image).unsqueeze(0)
     return image
+
+class AddReferenceImage(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id="AddReferenceImage",
+            category="quicknodes/images",
+            description="Add a reference image; if no image provided, passes conditioning unchanged",
+            inputs=[
+                io.Image.Input("image", optional=True),
+                io.Vae.Input("vae"),
+                io.Conditioning.Input("conditioning")
+            ],
+            outputs=[
+                io.Conditioning.Output("conditioning_out"),
+            ],
+        )
+        
+    @classmethod
+    def execute(cls, vae, conditioning, image=None): # type: ignore
+        if image is not None:
+            latent_pixels = vae.encode(image[:,:,:,:3])
+            conditioning = node_helpers.conditioning_set_values(conditioning, {"reference_latents": [latent_pixels]}, append=True)
+        return io.NodeOutput(conditioning)
+
+
+class ImageDifference(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id="ImageDifference",
+            category="quicknodes/images",
+            inputs=[
+                io.Image.Input("image1"),
+                io.Image.Input("image2"),
+                io.Float.Input("multiplier", default=1.0)
+            ],
+            outputs=[
+                io.Image.Output("image"),
+                io.Float.Output("mse", is_output_list=True)
+            ],
+            is_output_node=True
+        )
+        
+    @classmethod
+    def execute(cls, image1:torch.Tensor, image2:torch.Tensor, multiplier:float): # type: ignore
+        if image1.shape != image2.shape: 
+            print(f"Both inputs must be the same batch size and image dimensions. Got {image1.shape} != {image2.shape}.")
+            return io.NodeOutput(image1, [0.0,])
+        d = torch.clip(torch.abs(image1-image2) * multiplier , 0.0, 1.0)
+        mse = [ float(torch.nn.functional.mse_loss(image1[i], image2[i])) for i in range(image1.shape[0]) ]
+        return io.NodeOutput(d, mse)   
+
 
 class ImageMultiBatch(io.ComfyNode):
     @classmethod
@@ -36,7 +91,11 @@ class ImageMultiBatch(io.ComfyNode):
     @classmethod
     def execute(cls, **kwargs)-> io.NodeOutput:
         images:list[torch.Tensor] = [kwargs[k] for k in kwargs if kwargs[k] is not None]
-        s = torch.cat(images, dim=0) if images else None
+        try:
+            s = torch.cat(images, dim=0) if images else None
+        except Exception as e:
+            print(f"Error concatenating images in ImageMultiBatch: {e}")
+            s = None
         return io.NodeOutput(s, s.shape[0] if s is not None else 0) 
 
 class LoadImagesAsBatch:
@@ -68,28 +127,6 @@ class LoadImagesAsBatch:
 
         return (images, W, H, f"B={B} W={W} H={H}") 
 
-@ui_signal('display_text')
-class ImageDifference:
-    CATEGORY = "quicknodes/images"
-    @classmethod
-    def INPUT_TYPES(s):
-        return {"required": { 
-           "image1": ("IMAGE",), 
-           "image2": ("IMAGE",), 
-           "multiplier": ("FLOAT", {"default":1.0, "min":0}),
-        }  }
-    RETURN_TYPES = ("IMAGE", "FLOAT")
-    RETURN_NAMES = ("difference", "mse")
-    FUNCTION = "func"
-
-    def func(self, image1:torch.Tensor, image2:torch.Tensor, multiplier:float):
-        b1, h1, w1, _ = image1.shape
-        b2, h2, w2, _ = image2.shape
-        if (h1!=h2 or w1!=w2 or b1!=1 or b2!=1):
-            return (image1, 0.0, "need two single images of same size")
-        d = torch.abs(image1-image2) * multiplier
-        mse = float(torch.nn.functional.mse_loss(image1, image2))
-        return (d, mse, f"{mse:>10.8f}")   
 
 @ui_signal('display_text')
 class ImageSize:
@@ -158,6 +195,27 @@ class SizePicker:
             return wh
         else:
             return (wh[1], wh[0])
+        
+class DynamicSizePicker:
+    CATEGORY = "quicknodes/images"
+    @classmethod
+    def INPUT_TYPES(s):
+       return {
+           "required": { 
+                "guide": ("INT", {"default":1024, "tooltip":"approximate length of side if square"}),
+                "constraint": ("INT", {"default":8, "min":1, "max":1024, "tooltip":"W and h must be a multiple of this"}),
+                "w": ("INT", {"default":1024}),
+                "h": ("INT", {"default":1024}),
+                "aspect_ratio": ("FLOAT", {"default":1.0, "min":0.1, "max":10.0, "step":0.01, "tooltip":"width / height"}),
+           }
+       }
+    
+    RETURN_TYPES = ("INT","INT")
+    RETURN_NAMES = ("width","height")
+    FUNCTION = "func"
+
+    def func(self, w, h, **kwargs):
+        return (w,h)
         
 def resize(image, height, width):
     h,w = image.shape[1:3]
@@ -245,7 +303,7 @@ class ResizeImage:
                 resize(image_to_match if image_to_match is not None else image, height, width),
                 width, height, f"{width}x{height}") 
 
-CLAZZES = [ ImageSize, ImagesSize, ResizeImage, SizePicker, ImageDifference, CalculateRescale, LoadImagesAsBatch, ResizeByArea, ImageMultiBatch]
+CLAZZES = [ ImageSize, ImagesSize, ResizeImage, SizePicker, ImageDifference, CalculateRescale, LoadImagesAsBatch, ResizeByArea, ImageMultiBatch, DynamicSizePicker, AddReferenceImage]
 '''
 class QuicknodesExtension(ComfyExtension):
     @override
