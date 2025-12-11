@@ -27,7 +27,11 @@ class LoadLoraByName(LoraLoader):
             lora_name = lora_name.strip()
         if not lora_name.endswith('.safetensors'): lora_name += ".safetensors"
         if directory: lora_name = os.path.join(directory, lora_name)
-        return self.load_lora(model, clip, lora_name, strength_model, strength_model)
+        try:
+            return self.load_lora(model, clip, lora_name, strength_model, strength_model)
+        except FileNotFoundError as e:
+            print(f"{e}")
+            return(model, clip)
 
 class LoadLoraModelOnlyByName(LoraLoaderModelOnly):
     @classmethod

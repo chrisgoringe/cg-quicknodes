@@ -141,7 +141,7 @@ class AppendRandomFromList(io.ComfyNode):
         )
 
     @classmethod
-    def fingerprint_inputs(cls, **kwargs) -> io.Any:
+    def fingerprint_inputs(cls, **kwargs):
         return random.random()
 
     @classmethod

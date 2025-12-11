@@ -195,7 +195,8 @@ class SizePicker:
             return wh
         else:
             return (wh[1], wh[0])
-        
+
+
 class DynamicSizePicker:
     CATEGORY = "quicknodes/images"
     @classmethod
@@ -216,6 +217,42 @@ class DynamicSizePicker:
 
     def func(self, w, h, **kwargs):
         return (w,h)
+
+@ui_signal('display_text')
+class CalculatingSizePicker:
+    CATEGORY = "quicknodes/images"
+    @classmethod
+    def INPUT_TYPES(s):
+       return {
+           "required": { 
+                "guide": ("INT", {"default":1024, "tooltip":"approximate length of side if square"}),
+                "constraint": ("INT", {"default":8, "min":1, "max":1024, "tooltip":"W and h must be a multiple of this"}),
+                "aspect_ratio": ("FLOAT", {"default":0, "min":0.0, "max":10.0, "step":0.01, "tooltip":"width / height", "tooltip":"If given, w and h are ignored"}),      
+                "w": ("INT", {"default":0, "min":0, "max":4096}),
+                "h": ("INT", {"default":0, "min":0, "max":4096}),
+           }
+       }    
+
+    RETURN_TYPES = ("INT","INT","FLOAT")
+    RETURN_NAMES = ("width","height","aspect_ratio")
+    FUNCTION = "func"
+
+    def func(self, guide:int, constraint:int, w:int, h:int, aspect_ratio:float):
+        # Pick the aspect ratio if not given
+        if aspect_ratio == 0:
+            if (w==0 and h==0): aspect_ratio = 1.0
+            elif (w==0):        aspect_ratio = (guide * guide) / (h * h)
+            elif (h==0):        aspect_ratio = (w * w) / (guide * guide)
+            else:               aspect_ratio = w/h
+
+        wf = guide * math.sqrt(aspect_ratio)
+        hf = guide / math.sqrt(aspect_ratio)
+
+        w = int((wf+constraint//2)//constraint) * constraint     
+        h = int((hf+constraint//2)//constraint) * constraint  
+
+        return (w, h, w/h, f"{w} x {h} ({w/h:5.3f})")
+
         
 def resize(image, height, width):
     h,w = image.shape[1:3]
@@ -303,7 +340,7 @@ class ResizeImage:
                 resize(image_to_match if image_to_match is not None else image, height, width),
                 width, height, f"{width}x{height}") 
 
-CLAZZES = [ ImageSize, ImagesSize, ResizeImage, SizePicker, ImageDifference, CalculateRescale, LoadImagesAsBatch, ResizeByArea, ImageMultiBatch, DynamicSizePicker, AddReferenceImage]
+CLAZZES = [ ImageSize, ImagesSize, ResizeImage, SizePicker, ImageDifference, CalculateRescale, LoadImagesAsBatch, ResizeByArea, ImageMultiBatch, DynamicSizePicker, AddReferenceImage, CalculatingSizePicker]
 '''
 class QuicknodesExtension(ComfyExtension):
     @override

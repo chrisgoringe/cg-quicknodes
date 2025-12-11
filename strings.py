@@ -59,6 +59,16 @@ class ToFloat:
             return (float(string.strip()),)   
         except:
             return (0.0,)   
+        
+class StringAsCombo:
+    FUNCTION = "func"
+    CATEGORY = "quicknodes/strings"
+    @classmethod
+    def INPUT_TYPES(cls):
+        return { "required": { "string" : ("STRING", {"default":""}) }, }
+    RETURN_TYPES = ("COMBO",)
+    def func(self, string):
+        return (string,)
 
 class CombineStrings:
     FUNCTION = "func"
@@ -152,4 +162,4 @@ class ExtractFromJson:
         return (decode_nested_json(json_).get(key,""),)
 
     
-CLAZZES = [CombineStrings,Substitute, ToString, ToInt, ToFloat, Split, Common, ExtractFromJson]
+CLAZZES = [CombineStrings,Substitute, ToString, ToInt, ToFloat, Split, Common, ExtractFromJson, StringAsCombo]
