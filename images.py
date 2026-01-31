@@ -41,6 +41,27 @@ class AddReferenceImage(io.ComfyNode):
             conditioning = node_helpers.conditioning_set_values(conditioning, {"reference_latents": [latent_pixels]}, append=True)
         return io.NodeOutput(conditioning)
 
+class FirstOrLast(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id="FirstOrLast",
+            category="quicknodes/images",
+            inputs=[
+                io.Image.Input("image", optional=True),
+                io.String.Input("f_or_l")
+            ],
+            outputs=[
+                io.Image.Output("first"),
+                io.Image.Output("last"),
+            ],
+        )
+        
+    @classmethod
+    def execute(cls, image, f_or_l): # type: ignore
+        if f_or_l.strip().lower() == 'f':   return io.NodeOutput( image, None )
+        elif f_or_l.strip().lower() == 'l': return io.NodeOutput( None, image )
+        else: return io.NodeOutput( None, None )
 
 class ImageDifference(io.ComfyNode):
     @classmethod
@@ -340,7 +361,8 @@ class ResizeImage:
                 resize(image_to_match if image_to_match is not None else image, height, width),
                 width, height, f"{width}x{height}") 
 
-CLAZZES = [ ImageSize, ImagesSize, ResizeImage, SizePicker, ImageDifference, CalculateRescale, LoadImagesAsBatch, ResizeByArea, ImageMultiBatch, DynamicSizePicker, AddReferenceImage, CalculatingSizePicker]
+CLAZZES = [ ImageSize, ImagesSize, ResizeImage, SizePicker, ImageDifference, CalculateRescale, LoadImagesAsBatch, 
+           ResizeByArea, ImageMultiBatch, DynamicSizePicker, AddReferenceImage, CalculatingSizePicker, FirstOrLast]
 '''
 class QuicknodesExtension(ComfyExtension):
     @override

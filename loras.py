@@ -21,9 +21,12 @@ class LoadLoraByName(LoraLoader):
         if not lora_name: return(model, clip)
         strength_model = 1.0
         if ':' in lora_name:
-            lora_name, strength_model = lora_name.split(':')
-            try: strength_model = float(strength_model.strip())
-            except: print(e)
+            try:
+                lora_name, strength_model = lora_name.split(':')
+                strength_model = float(strength_model.strip())
+            except Exception as e: 
+                print(f"Failed to parse lora:strength '{e}'")
+                strength_model = 0.0
             lora_name = lora_name.strip()
         if not lora_name.endswith('.safetensors'): lora_name += ".safetensors"
         if directory: lora_name = os.path.join(directory, lora_name)

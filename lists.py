@@ -1,4 +1,5 @@
 import math
+from comfy_api.latest import io
 
 class List:
     CATEGORY = "quicknodes/lists"
@@ -123,4 +124,42 @@ class PickFromList:
         choices = to_string_list(options)
         return (choices[entry % len(choices)],) if choices else ("",)
     
-CLAZZES = [IntList,FloatList, Permutations, PickFromList, PermuteInts]
+class DualStringPermute(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id="DualStringPermute",
+            category="quicknodes/lists",
+            description="Produce a pair of lists of all s1,s2 permutations for s1 taken from list1 and s2 from list2",
+            inputs=[
+                io.String.Input("list1", multiline=True),
+                io.String.Input("list2", multiline=True),
+                io.Boolean.Input("strip_space", default=True),
+                io.Boolean.Input("allow_blank", default=False)
+            ],
+            outputs=[
+                io.String.Output("s1", is_output_list=True),
+                io.String.Output("s2", is_output_list=True),
+            ],
+        )
+    
+    @classmethod
+    def make_list(cls, s:str, strip_space:bool, allow_blank:bool) -> tuple[list[str], int]:
+        l:list[str] = s.split("\n")
+        if strip_space: l = [x.strip() for x in l]
+        if not allow_blank: l = [x for x in l if x]
+        return l, len(l)
+        
+    @classmethod
+    def execute(cls, list1:str, list2:str, strip_space:bool, allow_blank:bool): # type: ignore
+        l1, n1 = cls.make_list(list1, strip_space, allow_blank)
+        l2, n2 = cls.make_list(list2, strip_space, allow_blank)
+
+        out1 = [ l1[x  % n1] for x in range(n1*n2) ]
+        out2 = [ l2[x // n1] for x in range(n1*n2) ]
+
+        return io.NodeOutput( out1, out2 )
+
+
+    
+CLAZZES = [IntList,FloatList, Permutations, PickFromList, PermuteInts, DualStringPermute]
