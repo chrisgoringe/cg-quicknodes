@@ -45,21 +45,29 @@ class LoadLoraModelOnlyByName(LoraLoaderModelOnly):
                 "lora_name": ("STRING", {"tooltip": "The name of the LoRA; optionally :x for strength (else strength = 1.0)"}),
             },
             "optional": {
-                "directory": ("STRING", {"tooltip": "The subdirectory the LoRA is in"})
+                "directory": ("STRING", {"tooltip": "The subdirectory the LoRA is in"}),
+                "suffix": ("STRING", {"tooltip": "Suffix to add to lora name before .safetensors", "default": ""}),
             }
         }
     CATEGORY = "quicknodes"
     FUNCTION = "func"
 
-    def func(self, model, lora_name, directory=""):
+    def func(self, model, lora_name, directory="", suffix=""):
         if not lora_name: return(model, )
         strength_model = 1.0
         if ':' in lora_name:
-            lora_name, strength_model = lora_name.split(':')
-            try: strength_model = float(strength_model.strip())
-            except Exception as e: print(e)
+            try:
+                lora_name, strength_model = lora_name.split(':')
+                strength_model = float(strength_model.strip())
+            except Exception as e: 
+                print(f"Failed to parse lora:strength '{e}'")
+                strength_model = 0.0
             lora_name = lora_name.strip()
-        if not lora_name.endswith('.safetensors'): lora_name += ".safetensors"
+
+        base, ext = os.path.splitext(lora_name)
+        ext = ".safetensors"
+        lora_name = f"{base}{suffix}{ext}"
+        
         if directory: lora_name = os.path.join(directory, lora_name)
         return self.load_lora_model_only(model, lora_name, strength_model)
 
