@@ -1,6 +1,35 @@
 from datetime import date
 import re, os, json
 from comfy.comfy_types.node_typing import IO
+from comfy_api.latest import io
+
+class StringsToList(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id      = "StringsToList",
+            display_name = "Strings to List",
+            category     = "quicknodes/strings",
+            inputs       = [ 
+                io.String.Input("s1"),
+                io.String.Input("s2", optional=True),
+                io.String.Input("s3", optional=True),
+                io.String.Input("s4", optional=True),
+            ],
+            outputs      = [ io.String.Output("list", is_output_list=True), ],
+            is_input_list= True,
+        )
+    
+    @classmethod
+    def execute(cls, s1:str|list[str], s2:str|list[str], s3:str|list[str], s4:str|list[str]) -> io.NodeOutput: # type: ignore
+        combined = []
+        for s in [s1, s2, s3, s4]:
+            if s is None: continue
+            if isinstance(s, str) and s.strip():
+                combined.append(s.strip())
+            elif isinstance(s, list):
+                combined.extend([item.strip() for item in s if item.strip()])
+        return io.NodeOutput(combined)
 
 class ToString:
     FUNCTION = "func"
@@ -162,4 +191,4 @@ class ExtractFromJson:
         return (decode_nested_json(json_).get(key,""),)
 
     
-CLAZZES = [CombineStrings,Substitute, ToString, ToInt, ToFloat, Split, Common, ExtractFromJson, StringAsCombo]
+CLAZZES = [CombineStrings,Substitute, ToString, ToInt, ToFloat, Split, Common, ExtractFromJson, StringAsCombo, StringsToList]

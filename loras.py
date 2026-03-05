@@ -1,7 +1,26 @@
 from nodes import LoraLoader, LoraLoaderModelOnly
 import os
 
-class LoadLoraByName(LoraLoader):
+class LoraByNameAddin:
+    def get_loras(self, lora_name, directory, suffix="") -> list[tuple[str, float]]:
+        lora_names = []
+        for entry in [n.strip() for n in lora_name.split(',') if n.strip()]:
+            if not ':' in entry: entry += ':1.0'
+            name, strength = entry.split(':')
+            name = name.strip()
+            try:
+                strength = float(strength.strip())
+            except ValueError:
+                print(f"Failed to parse strength '{strength}' for lora '{name}', defaulting to 1.0")
+                strength = 1.0
+
+            name = f"{os.path.splitext(name)[0]}{suffix}.safetensors"
+
+            if directory: name = os.path.join(directory, name)
+            lora_names.append((name, strength))
+        return lora_names
+
+class LoadLoraByName(LoraLoader, LoraByNameAddin):
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -18,25 +37,12 @@ class LoadLoraByName(LoraLoader):
     FUNCTION = "func"
 
     def func(self, model, clip, lora_name, directory=""):
-        if not lora_name: return(model, clip)
-        strength_model = 1.0
-        if ':' in lora_name:
-            try:
-                lora_name, strength_model = lora_name.split(':')
-                strength_model = float(strength_model.strip())
-            except Exception as e: 
-                print(f"Failed to parse lora:strength '{e}'")
-                strength_model = 0.0
-            lora_name = lora_name.strip()
-        if not lora_name.endswith('.safetensors'): lora_name += ".safetensors"
-        if directory: lora_name = os.path.join(directory, lora_name)
-        try:
-            return self.load_lora(model, clip, lora_name, strength_model, strength_model)
-        except FileNotFoundError as e:
-            print(f"{e}")
-            return(model, clip)
+        for name, strength in self.get_loras(lora_name, directory):
+            try: model, clip = self.load_lora(model, clip, name, strength, strength)
+            except FileNotFoundError as e: print(f"{e}")
+        return(model, clip)
 
-class LoadLoraModelOnlyByName(LoraLoaderModelOnly):
+class LoadLoraModelOnlyByName(LoraLoaderModelOnly, LoraByNameAddin):
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -53,22 +59,9 @@ class LoadLoraModelOnlyByName(LoraLoaderModelOnly):
     FUNCTION = "func"
 
     def func(self, model, lora_name, directory="", suffix=""):
-        if not lora_name: return(model, )
-        strength_model = 1.0
-        if ':' in lora_name:
-            try:
-                lora_name, strength_model = lora_name.split(':')
-                strength_model = float(strength_model.strip())
-            except Exception as e: 
-                print(f"Failed to parse lora:strength '{e}'")
-                strength_model = 0.0
-            lora_name = lora_name.strip()
+        for name, strength in self.get_loras(lora_name, directory, suffix):
+            try: model = self.load_lora_model_only(model, name, strength)[0]
+            except FileNotFoundError as e: print(f"{e}")
+        return (model, )
 
-        base, ext = os.path.splitext(lora_name)
-        ext = ".safetensors"
-        lora_name = f"{base}{suffix}{ext}"
-        
-        if directory: lora_name = os.path.join(directory, lora_name)
-        return self.load_lora_model_only(model, lora_name, strength_model)
-
-CLAZZES = [LoadLoraByName, LoadLoraModelOnlyByName]
+CLAZZES = [] # [LoadLoraByName, LoadLoraModelOnlyByName]

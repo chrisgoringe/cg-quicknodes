@@ -63,6 +63,32 @@ class FirstOrLast(io.ComfyNode):
         elif f_or_l.strip().lower() == 'l': return io.NodeOutput( None, image )
         else: return io.NodeOutput( None, None )
 
+class SplitSingleFrame(io.ComfyNode):
+    @classmethod
+    def define_schema(cls) -> io.Schema:
+        return io.Schema(
+            node_id="SplitSingleFrame",
+            category="quicknodes/images",
+            description="Splits into first frame and others or last frame and others. The other two outputs are None.",
+            inputs=[
+                io.Image.Input("images"),
+                io.Combo.Input("select", options=['first', 'last'])
+            ],
+            outputs=[
+                io.Image.Output("first_frame", display_name="first_frame", tooltip="If first selected"),
+                io.Image.Output("frames_after_first", display_name="frames_after_first", tooltip="If first selected"),
+                io.Image.Output("last_frame", display_name="last_frame", tooltip="If last selected"),
+                io.Image.Output("frames_before_last", display_name="frames_before_last", tooltip="If last selected"),
+            ]
+        )
+    
+    @classmethod
+    def execute(cls, images:torch.Tensor, select:str): # type: ignore
+        if (select=='first'): 
+            return io.NodeOutput( images[:1], images[1:], None, None )
+        else:
+            return io.NodeOutput( None, None, images[-1:], images[:-1] )
+
 class ImageDifference(io.ComfyNode):
     @classmethod
     def define_schema(cls):
@@ -361,8 +387,9 @@ class ResizeImage:
                 resize(image_to_match if image_to_match is not None else image, height, width),
                 width, height, f"{width}x{height}") 
 
-CLAZZES = [ ImageSize, ImagesSize, ResizeImage, SizePicker, ImageDifference, CalculateRescale, LoadImagesAsBatch, 
-           ResizeByArea, ImageMultiBatch, DynamicSizePicker, AddReferenceImage, CalculatingSizePicker, FirstOrLast]
+CLAZZES = [ImageSize, ImagesSize, ResizeImage, SizePicker, ImageDifference, CalculateRescale, LoadImagesAsBatch, 
+           ResizeByArea, ImageMultiBatch, DynamicSizePicker, AddReferenceImage, CalculatingSizePicker, 
+           FirstOrLast, SplitSingleFrame]
 '''
 class QuicknodesExtension(ComfyExtension):
     @override
