@@ -11,25 +11,19 @@ class StringsToList(io.ComfyNode):
             display_name = "Strings to List",
             category     = "quicknodes/strings",
             inputs       = [ 
-                io.String.Input("s1"),
-                io.String.Input("s2", optional=True),
-                io.String.Input("s3", optional=True),
-                io.String.Input("s4", optional=True),
+                io.Boolean.Input("strip", default=True, tooltip="Strip whitespace"),
+                io.Boolean.Input("blanks", default=False, tooltip="Include blank strings"),
+                io.Autogrow.Input('string', template=io.Autogrow.TemplatePrefix(io.String.Input("string"), prefix="string", min=1, max=20), optional=True)
             ],
             outputs      = [ io.String.Output("list", is_output_list=True), ],
-            is_input_list= True,
         )
     
     @classmethod
-    def execute(cls, s1:str|list[str], s2:str|list[str], s3:str|list[str], s4:str|list[str]) -> io.NodeOutput: # type: ignore
-        combined = []
-        for s in [s1, s2, s3, s4]:
-            if s is None: continue
-            if isinstance(s, str) and s.strip():
-                combined.append(s.strip())
-            elif isinstance(s, list):
-                combined.extend([item.strip() for item in s if item.strip()])
-        return io.NodeOutput(combined)
+    def execute(cls, strip:bool, blanks:bool, string: io.Autogrow.Type) -> io.NodeOutput: # type: ignore
+        strs = [string[k] for k in sorted(string.keys())]
+        if strip: strs = [s.strip() for s in strs]
+        if not blanks: strs = [s for s in strs if s]
+        return io.NodeOutput( strs, )
 
 class ToString:
     FUNCTION = "func"
