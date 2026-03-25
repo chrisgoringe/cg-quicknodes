@@ -63,6 +63,31 @@ class FirstOrLast(io.ComfyNode):
         elif f_or_l.strip().lower() == 'l': return io.NodeOutput( None, image )
         else: return io.NodeOutput( None, None )
 
+class FirstOrLastPlus(io.ComfyNode):
+    @classmethod
+    def define_schema(cls) -> io.Schema:
+        return io.Schema(
+            node_id="FirstOrLastPlus",
+            category="quicknodes/images",
+            description="Send the image to one output or the other.",
+            inputs=[
+                io.Image.Input("image", optional=True),
+                io.Combo.Input("select", options=['first', 'last'])
+            ],
+            outputs=[
+                io.Image.Output("first", display_name="first", tooltip="If first selected"),
+                io.Image.Output("last", display_name="last", tooltip="If last selected"),
+                io.Image.Output("none", display_name="none", tooltip="Always None"),
+            ]
+        )    
+    
+    @classmethod
+    def execute(cls, image:Optional[torch.Tensor]=None, select:str="first"): # type: ignore
+        if (select=='first'): 
+            return io.NodeOutput( image, None, None )
+        else:
+            return io.NodeOutput( None, image, None )
+
 class SplitSingleFrame(io.ComfyNode):
     @classmethod
     def define_schema(cls) -> io.Schema:
@@ -389,7 +414,7 @@ class ResizeImage:
 
 CLAZZES = [ImageSize, ImagesSize, ResizeImage, SizePicker, ImageDifference, CalculateRescale, LoadImagesAsBatch, 
            ResizeByArea, ImageMultiBatch, DynamicSizePicker, AddReferenceImage, CalculatingSizePicker, 
-           FirstOrLast, SplitSingleFrame]
+           FirstOrLast, SplitSingleFrame, FirstOrLastPlus]
 '''
 class QuicknodesExtension(ComfyExtension):
     @override
