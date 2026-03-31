@@ -339,7 +339,7 @@ class ResizeByArea:
     @classmethod
     def INPUT_TYPES(cls):
         return {"required":  { 
-            "constraint": (["x8", "x16", "x64", "x112", "none"],),
+            "constraint": (["x8", "x16", "x32", "x64", "none"],),
             "image": ("IMAGE",),
             "size": ("INT", {"default":1024, "min":1, "max":10000, "tooltip":"Square root of target area in pixels"}),
             "down_only": ("BOOLEAN", {"default":False, "tooltip":"Only resize if the image is larger than the target area (will still adjust to meet constraint)"}),

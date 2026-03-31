@@ -15,7 +15,7 @@ def parse_string(string):
 def to_string_list(options:str, allow_blanks=False, remove_space=True, might_be_file=True) -> list[str]:
     lines = options.split("\n")
 
-    if len(lines)==1 and might_be_file and os.path.exists(lines[0]):
+    if len(lines)==1 and might_be_file and os.path.exists(lines[0]) and os.path.isfile(lines[0]):
         with open(lines[0], 'r') as fh: lines = fh.readlines()
 
     lines = [ line.split('#')[0] for line in lines if not line.startswith('#') ]
