@@ -3,6 +3,8 @@ from pathlib import Path
 import random, os
 import numpy as np
 from PIL import Image
+import torch
+from typing import Optional
 
 class SaveImageInFolder(io.ComfyNode):
     @classmethod
