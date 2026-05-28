@@ -26,6 +26,7 @@ class SimpleFloat(io.ComfyNode):
             description     = "A simple integer",
             inputs          = [ io.Float.Input("float_in", display_name="float"), ],
             outputs         = [ io.Float.Output("float_out", display_name="float"), ],
+            is_deprecated=True
         )
 
     @classmethod
@@ -42,6 +43,7 @@ class SimpleString(io.ComfyNode):
             description     = "A simple integer",
             inputs          = [ io.String.Input("string_in", display_name="string"), ],
             outputs         = [ io.String.Output("string_out", display_name="string"), ],
+            is_deprecated=True
         )
 
     @classmethod
@@ -59,6 +61,7 @@ class SimpleMultilineString(io.ComfyNode):
             description     = "A simple integer",
             inputs          = [ io.String.Input("string_in", display_name="string", multiline=True), ],
             outputs         = [ io.String.Output("string_out", display_name="string"), ],
+            is_deprecated=True
         )
 
     @classmethod

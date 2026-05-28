@@ -12,9 +12,14 @@ for module in [os.path.splitext(f)[0] for f in os.listdir(module_root_directory)
     imported_module = importlib.import_module(f"{module}")
     if 'CLAZZES' in imported_module.__dict__:
         for clazz in imported_module.CLAZZES:
-            name = clazz.__name__
-            NODE_CLASS_MAPPINGS[name] = clazz
-            NODE_DISPLAY_NAME_MAPPINGS[name] = pretty(name)
+            if hasattr(clazz, 'define_schema'):
+                name = clazz.define_schema().node_id
+                NODE_CLASS_MAPPINGS[name] = clazz
+                NODE_DISPLAY_NAME_MAPPINGS[name] = clazz.define_schema().display_name
+            else:
+                name = clazz.__name__
+                NODE_CLASS_MAPPINGS[name] = clazz
+                NODE_DISPLAY_NAME_MAPPINGS[name] = pretty(name)
 
 WEB_DIRECTORY = "./js"
 __all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS', 'WEB_DIRECTORY']

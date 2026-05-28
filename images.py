@@ -17,6 +17,26 @@ def load_image_as_tensor(filepath: str) -> torch.Tensor:
     image = torch.from_numpy(image).unsqueeze(0)
     return image
 
+class BlankImage(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id="cg_BlankImage",
+            category="quicknodes/images",
+            description="Creates a blank image of the specified size and color.",
+            inputs=[
+                io.Int.Input("width", default=512, min=1, max=10000),
+                io.Int.Input("height", default=512, min=1, max=10000),
+            ],
+            outputs=[
+                io.Image.Output("image"),
+            ],
+        )
+        
+    @classmethod
+    def execute(cls, width:int, height:int) -> io.NodeOutput: # type: ignore
+        return io.NodeOutput(torch.zeros((1, height, width, 3), dtype=torch.float32))
+
 class AddReferenceImage(io.ComfyNode):
     @classmethod
     def define_schema(cls):
@@ -169,6 +189,39 @@ class ImageMultiBatch(io.ComfyNode):
             print(f"Error concatenating images in ImageMultiBatch: {e}")
             s = None
         return io.NodeOutput(s, s.shape[0] if s is not None else 0) 
+    
+class LazyImageBatch(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id="cg_LazyImageBatch",
+            display_name="Lazy Image Batch",
+            category="quicknodes/images",
+            inputs=[
+                io.Image.Input("image1", optional=False),
+                io.Image.Input("image2", optional=True, lazy=True),
+                io.Image.Input("image3", optional=True, lazy=True),
+                io.Image.Input("image4", optional=True, lazy=True),
+                io.Image.Input("image5", optional=True, lazy=True),
+                io.Image.Input("image6", optional=True, lazy=True),
+                io.Image.Input("image7", optional=True, lazy=True),
+                io.Image.Input("image8", optional=True, lazy=True),
+                io.Image.Input("image9", optional=True, lazy=True),
+                io.Int.Input("number", default=1, min=1, max=9),
+            ],
+            outputs=[
+                io.Image.Output("image", display_name="image"),
+            ],
+        )
+    @classmethod
+    def check_lazy_status(cls, **kwargs) -> list[str]:
+        return ['number'] if kwargs['number'] is None else [ f"image{i+1}" for i in range(kwargs['number']) ] 
+    
+    @classmethod
+    def execute(cls, **kwargs) -> io.NodeOutput:
+        number = kwargs['number']
+        images:list[torch.Tensor] = [x for i in range(number) if (x:=kwargs.get(f'image{i+1}', None)) is not None]
+        return io.NodeOutput(torch.cat(images))
 
 class LoadImagesAsBatch:
     CATEGORY = "quicknodes/images"
@@ -414,14 +467,4 @@ class ResizeImage:
 
 CLAZZES = [ImageSize, ImagesSize, ResizeImage, SizePicker, ImageDifference, CalculateRescale, LoadImagesAsBatch, 
            ResizeByArea, ImageMultiBatch, DynamicSizePicker, AddReferenceImage, CalculatingSizePicker, 
-           FirstOrLast, SplitSingleFrame, FirstOrLastPlus]
-'''
-class QuicknodesExtension(ComfyExtension):
-    @override
-    async def get_node_list(self) -> list[type[io.ComfyNode]]:
-        return [
-            ImageMultiBatch,
-        ]
-
-async def comfy_entrypoint() -> QuicknodesExtension:
-    return QuicknodesExtension()'''
+           FirstOrLast, SplitSingleFrame, FirstOrLastPlus, LazyImageBatch, BlankImage]

@@ -1,5 +1,6 @@
 import torch
 from comfy.model_patcher import ModelPatcher
+from node_helpers import conditioning_set_values
 
 def create_weight_list(length:int, start:float, intermediates:list[tuple[float,float]], end:float) -> list[float]:
     points = [(0.0,start),] + intermediates + [(1.0,end),]
@@ -56,4 +57,27 @@ class WanModelLatentSlicer:
         model.set_model_unet_function_wrapper(wrapper)
         return (model,)
     
-CLAZZES = [WanModelLatentSlicer,]
+
+class ReConditioning:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {"required": {"positive": ("CONDITIONING", ),
+                             "negative": ("CONDITIONING", ),
+                             "latent": ("LATENT", ),
+                             }}
+
+    RETURN_TYPES = ("CONDITIONING","CONDITIONING")
+    RETURN_NAMES = ("positive", "negative")
+    FUNCTION = "encode"
+
+    CATEGORY = "quicknodes/conditioning"
+
+    def encode(self, positive, negative, latent):
+        p = conditioning_set_values(positive, {"concat_latent_image": latent["samples"]})
+        n = conditioning_set_values(negative, {"concat_latent_image": latent["samples"]})
+
+        return (p,n)
+
+
+    
+CLAZZES = [WanModelLatentSlicer,ReConditioning]
