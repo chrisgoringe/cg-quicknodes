@@ -198,16 +198,17 @@ class LazyImageBatch(io.ComfyNode):
             display_name="Lazy Image Batch",
             category="quicknodes/images",
             inputs=[
-                io.Image.Input("image1", optional=False),
-                io.Image.Input("image2", optional=True, lazy=True),
-                io.Image.Input("image3", optional=True, lazy=True),
-                io.Image.Input("image4", optional=True, lazy=True),
-                io.Image.Input("image5", optional=True, lazy=True),
-                io.Image.Input("image6", optional=True, lazy=True),
-                io.Image.Input("image7", optional=True, lazy=True),
-                io.Image.Input("image8", optional=True, lazy=True),
-                io.Image.Input("image9", optional=True, lazy=True),
-                io.Int.Input("number", default=1, min=1, max=9),
+                io.Image.Input('image0', lazy=True ),
+                io.Image.Input('image1', lazy=True, optional=True ),
+                io.Image.Input('image2', lazy=True, optional=True ),
+                io.Image.Input('image3', lazy=True, optional=True ),
+                io.Image.Input('image4', lazy=True, optional=True ),
+                io.Image.Input('image5', lazy=True, optional=True ),
+                io.Image.Input('image6', lazy=True, optional=True ),
+                io.Image.Input('image7', lazy=True, optional=True ),
+                io.Image.Input('image8', lazy=True, optional=True ),
+                io.Image.Input('image9', lazy=True, optional=True ),
+                io.Int.Input("number", default=1, min=1, max=10, tooltip="Only this number of images will be processed; other inputs won't be evaluated"),
             ],
             outputs=[
                 io.Image.Output("image", display_name="image"),
@@ -215,12 +216,12 @@ class LazyImageBatch(io.ComfyNode):
         )
     @classmethod
     def check_lazy_status(cls, **kwargs) -> list[str]:
-        return ['number'] if kwargs['number'] is None else [ f"image{i+1}" for i in range(kwargs['number']) ] 
+        return ['number'] if kwargs['number'] is None else [ f"image{i}" for i in range(kwargs['number']) ] 
     
     @classmethod
     def execute(cls, **kwargs) -> io.NodeOutput:
         number = kwargs['number']
-        images:list[torch.Tensor] = [x for i in range(number) if (x:=kwargs.get(f'image{i+1}', None)) is not None]
+        images:list[torch.Tensor] = [x for i in range(number) if (x:=kwargs.get(f'image{i}', None)) is not None]
         return io.NodeOutput(torch.cat(images))
 
 class LoadImagesAsBatch:
