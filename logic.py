@@ -55,6 +55,12 @@ class RandomBoolean(io.ComfyNode):
         )
     
     @classmethod
+    def fingerprint_inputs(cls, **kwargs) -> Any:
+        # Never return the same value twice, so the node is re-executed
+        # (and the boolean re-rolled) on every run instead of being cached.
+        return random.random()
+
+    @classmethod
     def execute(cls, p:float) -> io.NodeOutput: # type: ignore
         return io.NodeOutput( random.random()<p )
 
