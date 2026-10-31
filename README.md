@@ -6,6 +6,8 @@ To install, navigate to your custom_nodes directory and `git clone https://githu
 
 To update, navigate to the cg-quicknodes subdirectory and `git pull`.
 
+Please note that I don't really support these nodes, nor are they well documented!
+
 ## Display Text
 
 Take any input (of any type) and display a string respresentation of it

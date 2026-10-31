@@ -1,7 +1,98 @@
 from datetime import date
-import re, os, json
+import re, os, json, random
 from comfy.comfy_types.node_typing import IO
 from comfy_api.latest import io
+
+SWAPPERS:dict[str,list[str]] = {
+    'colors' : [
+        "black",
+        "blue",
+        "brown",
+        "gray", "grey",
+        "green",
+        "orange",
+        "pink",
+        "purple", 
+        "red",    
+        "teal",  
+        "violet",
+        "white",
+        "yellow",
+    ]
+}
+class StringSwapper(io.ComfyNode):
+    marker  = '||stringswapperswap||'
+    markerT = '||Stringswapperswap||'
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id      = "cg_StringSwapper",
+            display_name = "StringSwapper",
+            category     = "quicknodes/strings",
+            inputs       = [ 
+                io.String.Input("text"),
+                io.Combo.Input("dictionary", options=[k for k in SWAPPERS]),
+                io.Boolean.Input("active", default=True)
+            ],
+            outputs = [ io.String.Output('processed'), ]
+        )
+    
+    @classmethod
+    def execute(cls, text:str, dictionary:str, active:bool) -> io.NodeOutput: # type: ignore
+        if active:
+            swaps = SWAPPERS[dictionary]
+            for swap in swaps: 
+                text = re.sub(r'(^|\W)'+swap+r'($|\W)', r'\1'+cls.marker+r'\2', text)
+                text = re.sub(r'(^|\W)'+swap.title()+r'($|\W)', r'\1'+cls.markerT+r'\2', text)
+            while cls.marker  in text: text = text.replace(cls.marker,  random.choice(swaps), 1)
+            while cls.markerT in text: text = text.replace(cls.markerT, random.choice(swaps).title(), 1)
+
+        return io.NodeOutput( text, )    
+
+class CombineLines(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id      = "cg_CombineLines",
+            display_name = "Combine Lines",
+            category     = "quicknodes/strings",
+            inputs       = [ 
+                io.Autogrow.Input("lines", 
+                    template=io.Autogrow.TemplatePrefix(
+                        input=io.String.Input("line"), prefix="line_", min=0, max=9
+                    )
+                ),
+            ],
+            outputs = [ io.String.Output('merged'), ]
+        )
+    
+    @classmethod
+    def execute(cls, lines) -> io.NodeOutput: # type: ignore
+        r = "\n".join(lines.values())
+        return io.NodeOutput( r, )
+    
+class CombineStringsExtended(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id      = "cg_CombineStringsExtended",
+            display_name = "Combine Strings Extended",
+            category     = "quicknodes/strings",
+            inputs       = [ 
+                io.String.Input("template", tooltip="[x0] replaced with that input etc.."),
+                io.Autogrow.Input("x", 
+                    template=io.Autogrow.TemplatePrefix(
+                        input=io.AnyType.Input("x"), prefix="x", min=1, max=19,
+                    )
+                ),
+            ],
+            outputs = [ io.String.Output('merged'), ]
+        )
+    
+    @classmethod
+    def execute(cls, template:str, x:dict) -> io.NodeOutput: # type: ignore
+        for k,v in x.items(): template = template.replace(f"[{k}]", str(v))
+        return io.NodeOutput( template, )
 
 class StringsToList(io.ComfyNode):
     @classmethod
@@ -185,4 +276,6 @@ class ExtractFromJson:
         return (decode_nested_json(json_).get(key,""),)
 
     
-CLAZZES = [CombineStrings,Substitute, ToString, ToInt, ToFloat, Split, Common, ExtractFromJson, StringAsCombo, StringsToList]
+CLAZZES = [StringSwapper, CombineStrings, CombineStringsExtended, Substitute, ToString, 
+           ToInt, ToFloat, Split, Common, ExtractFromJson, StringAsCombo, 
+           StringsToList, CombineLines]

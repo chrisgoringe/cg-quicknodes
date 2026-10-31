@@ -39,7 +39,7 @@ class Truthiness(io.ComfyNode):
         
         return io.NodeOutput( bool(anything) )
     
-class RandomBoolean(io.ComfyNode):
+class RandomBoolean(io.ComfyNode, ):
     @classmethod
     def define_schema(cls):
         return io.Schema(
@@ -57,6 +57,10 @@ class RandomBoolean(io.ComfyNode):
     @classmethod
     def execute(cls, p:float) -> io.NodeOutput: # type: ignore
         return io.NodeOutput( random.random()<p )
+    
+    @classmethod
+    def fingerprint_inputs(cls, **kwargs) -> Any:
+        return random.random()
 
 COMPARES = {
     "==": lambda a, b: a == b,

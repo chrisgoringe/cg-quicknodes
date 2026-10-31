@@ -36,6 +36,23 @@ class BlankImage(io.ComfyNode):
     @classmethod
     def execute(cls, width:int, height:int) -> io.NodeOutput: # type: ignore
         return io.NodeOutput(torch.zeros((1, height, width, 3), dtype=torch.float32))
+    
+class NoneImage(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id="cg_NoneImage",
+            category="quicknodes/images",
+            description="Outputs a python None of type image",
+            inputs=[],
+            outputs=[ io.Image.Output("image", display_name='none_image'), ],
+        )
+        
+    @classmethod
+    def execute(cls) -> io.NodeOutput: # type: ignore
+        return io.NodeOutput(None,)
+    
+
 
 class AddReferenceImage(io.ComfyNode):
     @classmethod
@@ -468,4 +485,4 @@ class ResizeImage:
 
 CLAZZES = [ImageSize, ImagesSize, ResizeImage, SizePicker, ImageDifference, CalculateRescale, LoadImagesAsBatch, 
            ResizeByArea, ImageMultiBatch, DynamicSizePicker, AddReferenceImage, CalculatingSizePicker, 
-           FirstOrLast, SplitSingleFrame, FirstOrLastPlus, LazyImageBatch, BlankImage]
+           FirstOrLast, SplitSingleFrame, FirstOrLastPlus, LazyImageBatch, BlankImage, NoneImage]
