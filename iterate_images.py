@@ -1,13 +1,14 @@
 
 from ui_decorator import ui_signal
-import os, json, random, shutil
+import os, json, random
 from PIL import Image, ImageOps
 import numpy as np
 import torch
 from comfy.model_management import InterruptProcessingException
 from typing import Optional
+from pathlib import Path
 
-def load_image(filepath:str) -> tuple[torch.Tensor, str]:
+def load_image(filepath:str|Path) -> tuple[torch.Tensor, str]:
         i = Image.open(filepath)
         text = i.text if hasattr(i,'text') else {} # type: ignore
         i = ImageOps.exif_transpose(i)
@@ -16,12 +17,13 @@ def load_image(filepath:str) -> tuple[torch.Tensor, str]:
         image = np.array(image).astype(np.float32) / 255.0
         return torch.from_numpy(image)[None,], json.dumps(text, indent=1)
 
-def safe_move(filepath:str, target_directory:str):
-    if not os.path.exists(filepath): return
-    if not os.path.exists(target_directory): os.makedirs(target_directory, exist_ok=True)
-    targetpath = os.path.join(target_directory, os.path.basename(filepath))
-    while os.path.exists(targetpath): targetpath = os.path.splitext(targetpath)[0] + f"{random.randint(1000000,9999999)}" + os.path.splitext(targetpath)[1]
-    shutil.move(filepath, targetpath)
+def safe_move(filepath:Path, target_directory:Path):
+    if not filepath.exists(): return
+    if not target_directory.exists(): target_directory.mkdir()
+    targetpath = target_directory / filepath.name 
+    while os.path.exists(targetpath): 
+        targetpath = target_directory / f"{filepath.stem}{random.randint(1000000,9999999)}{filepath.suffix}"
+    filepath.rename(targetpath)
 
 @ui_signal(['modify_self','terminate'], output_node=False)
 class IterateImages:
@@ -49,11 +51,13 @@ restart_iterate restarts and switches to iterate.'''
             }, 
             "optional" : {
                 "recurse": ("BOOLEAN", {"default":False}),
+                "number": ("INT", {"default":1, "min":1, "max":100}),
             }
         }
 
     RETURN_TYPES = ("IMAGE","STRING","STRING","STRING","INT",)
     RETURN_NAMES = ("image","filepath","metadata",".txt","left",)
+    OUTPUT_IS_LIST = (True,True,True,True,False)
     CATEGORY = "quicknodes/images"
 
     def find_in_folder(self, folder, test, recurse) -> list[str]:
@@ -82,8 +86,9 @@ restart_iterate restarts and switches to iterate.'''
     def IS_CHANGED(cls, **kwargs):
         return float("NaN")
         
-    def func(self, folder:str, extensions:str, require_text:bool, text_extension:str, order:str, mode:str, delete:bool, recurse:bool=False):
+    def func(self, folder:str|Path, extensions:str, require_text:bool, text_extension:str, order:str, mode:str, delete:bool, recurse:bool=False, number:int=1):
         hsh = f"{folder}{extensions}{require_text}{text_extension}{order}{recurse}"
+        folder = Path(folder)
         if (    
                 self.files_left is None or 
                 mode=="replace"         or 
@@ -91,37 +96,58 @@ restart_iterate restarts and switches to iterate.'''
                 hsh!=self.hsh           or 
                 (mode=="loop" and not self.files_left)
             ):
-            self.load_and_sort(folder, extensions, require_text, text_extension, order, recurse) 
+            self.load_and_sort(str(folder), extensions, require_text, text_extension, order, recurse) 
             self.hsh = hsh
 
         if not self.files_left: raise InterruptProcessingException()
 
-        filename = self.files_left[0]
+        filenames = self.files_left[:number]
         if mode!="replace": 
-            self.files_left = self.files_left[1:]
+            self.files_left = self.files_left[len(filenames):]
 
-        filepath        = os.path.join(folder, filename)
-        image, metadata = load_image(filepath)
-        textpath        = os.path.splitext(filepath)[0] + text_extension
+        filepaths     = [folder / filename for filename in filenames]
+        img_and_metas = [load_image(filepath) for filepath in filepaths]
+        textpaths     = [filepath.parent / f"{filepath.stem}{text_extension}" for filepath in filepaths]
 
-        if os.path.exists(textpath):
-            with open(textpath,'r',encoding='utf8') as fh: 
-                if text_extension==".json":
-                    texts = json.load(fh)
-                    text = random.choice(texts)
-                else:
-                    text = "\n".join(fh.readlines())
-        else:
-            text = ""
+        metadatas     = [im[1] for im in img_and_metas]
+        images        = [im[0] for im in img_and_metas]
+
+        def get_txt(textpath:Path):
+            try:
+                with open(textpath,'r',encoding='utf8') as fh: return fh.read()
+            except:
+                return ""
+
+        texts = [get_txt(textpath) for textpath in textpaths]
 
         if delete: 
-            bin_dir = os.path.join(os.path.dirname(filepath), 'bin')
-            safe_move(filepath, bin_dir)
-            safe_move(textpath, bin_dir)
+            for filepath, textpath in zip(filepaths, textpaths):
+                bin_dir = folder / 'bin'
+                safe_move(filepath, bin_dir)
+                safe_move(textpath, bin_dir)
 
         widget_changes    = [("mode","iterate"),] if mode=="restart_iterate" else []
         terminate_command = "autoqueueoff" if (mode=="iterate" and not self.files_left) else "no"
 
-        return (image, filepath, metadata, text, len(self.files_left), widget_changes, terminate_command)
+        return (images, filepaths, metadatas, texts, len(self.files_left), widget_changes, terminate_command)
 
-CLAZZES = [IterateImages,]
+class BatchImageListWithPadding:
+    @classmethod    
+    def INPUT_TYPES(cls):
+        return { "required":  { "images": ("IMAGE", {} ),  } }
+
+    RETURN_TYPES   = ("IMAGE",)
+    RETURN_NAMES   = ("image",)
+    INPUT_IS_LIST  = True
+    OUTPUT_IS_LIST = (False,)
+    CATEGORY       = "quicknodes/images"
+    FUNCTION       = "func"
+
+    def func(self, images):
+
+        X = max(i.shape[1] for i in images)
+        Y = max(i.shape[2] for i in images)
+        padded_images = [ torch.nn.functional.pad(i,(0,0,0,Y-i.shape[2],0,X-i.shape[1])) for i in images ]
+        return ( torch.cat(padded_images), )
+
+CLAZZES = [IterateImages,BatchImageListWithPadding]
