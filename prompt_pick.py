@@ -1,30 +1,30 @@
 import json, os
+from pathlib import Path
 
-class PromptPick:
-    path = os.path.join(os.path.dirname(__file__), "resources", "prompt_pick.json")
-    
-    options = {}
-    if not os.path.exists(path):
-        print(f"{path} not found")
-    else:
+path = Path(__file__).parent / 'resources' / 'prompt_pick.json'
+
+if path.exists():
+    class PromptPick:
         with open(path, "r") as f: options = json.load(f)
 
-    CATEGORY = "quicknodes"
-    @classmethod    
-    def INPUT_TYPES(s):
-        return { "required":  { "pick": (list(k for k in PromptPick.options),{} ) } }
-    RETURN_TYPES = ("STRING","STRING")
-    RETURN_NAMES = ("short","long")
-    FUNCTION = "func"
-    def func(self,pick):
-        with open(PromptPick.path, "r") as f: options = json.load(f)
-        p0 = options[pick][0]
-        p1 = " ".join(options[pick])
-        return (p0,p1,)
-    
-    @classmethod
-    def IS_CHANGED(self,pick):
-        with open(PromptPick.path, "r") as f: options = json.load(f)
-        return (" ".join(options[pick]),)
-    
-CLAZZES = [PromptPick]
+        CATEGORY = "quicknodes"
+        @classmethod    
+        def INPUT_TYPES(cls):
+            return { "required":  { "pick": (list(k for k in PromptPick.options),{} ) } }
+        RETURN_TYPES = ("STRING","STRING")
+        RETURN_NAMES = ("short","long")
+        FUNCTION = "func"
+        def func(self,pick):
+            with open(path, "r") as f: options = json.load(f)
+            p0 = options[pick][0]
+            p1 = " ".join(options[pick])
+            return (p0,p1,)
+        
+        @classmethod
+        def IS_CHANGED(cls,pick):
+            with open(path, "r") as f: options = json.load(f)
+            return (" ".join(options[pick]),)
+        
+    CLAZZES = [PromptPick]
+else:
+    print(f"{path} not found; PromptPick not loaded")
